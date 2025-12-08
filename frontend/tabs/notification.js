@@ -1,14 +1,12 @@
-import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-// Notification Data
 const notifications = {
   today: [
     {
@@ -29,6 +27,7 @@ const notifications = {
       time: "18 hr",
     },
   ],
+
   weekly: [
     {
       title: "Your event payment is confirmed.",
@@ -44,28 +43,23 @@ const notifications = {
   ],
 };
 
-export default function NotificationScreen({ navigation }) {
+export default function NotificationScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation?.goBack?.()}>
-          <Ionicons name="chevron-back" size={26} color="#333" />
-        </TouchableOpacity>
-
         <Text style={styles.headerText}>Notifications</Text>
-
-        <Ionicons name="notifications-outline" size={24} color="#333" />
+        <Ionicons name="notifications-outline" size={26} color="#333" />
       </View>
 
-      {/* Clear All */}
+      {/* Clear all */}
       <TouchableOpacity style={styles.clearButton}>
         <Text style={styles.clearText}>Clear all</Text>
       </TouchableOpacity>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={styles.scrollContainer}
       >
         {/* Today */}
         <Text style={styles.sectionTitle}>Today</Text>
@@ -73,8 +67,10 @@ export default function NotificationScreen({ navigation }) {
           <NotificationCard key={index} item={item} />
         ))}
 
-        {/* Earlier This Week */}
-        <Text style={styles.sectionTitle}>Earlier this week</Text>
+        {/* Earlier */}
+        <Text style={[styles.sectionTitle, { marginTop: 25 }]}>
+          Earlier this week
+        </Text>
         {notifications.weekly.map((item, index) => (
           <NotificationCard key={index} item={item} />
         ))}
@@ -83,106 +79,97 @@ export default function NotificationScreen({ navigation }) {
   );
 }
 
-// Notification Card Component
 function NotificationCard({ item }) {
   return (
     <TouchableOpacity activeOpacity={0.8}>
       <View style={styles.card}>
-        <View style={styles.bulletPoint} />
-
-        <View style={{ flex: 1 }}>
-          <Text style={styles.cardTitle}>{item.title}</Text>
-          <Text style={styles.cardDesc}>{item.description}</Text>
-        </View>
-
+        <Text style={styles.cardTitle}>{item.title}</Text>
+        <Text style={styles.cardDesc}>{item.description}</Text>
         <Text style={styles.timeText}>{item.time}</Text>
       </View>
     </TouchableOpacity>
   );
 }
 
-// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    paddingTop: 50,
-    paddingHorizontal: 20,
+    backgroundColor: "#F7F7F9",
+    paddingTop: 55,
+    paddingHorizontal: 18,
   },
 
+  /** HEADER */
   header: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 5,
   },
 
   headerText: {
     fontSize: 22,
-    fontWeight: "600",
-    color: "#333",
+    fontWeight: "700",
+    color: "#222",
   },
 
+  /** CLEAR BUTTON */
   clearButton: {
     alignSelf: "flex-end",
-    marginVertical: 10,
+    marginVertical: 8,
   },
 
   clearText: {
-    color: "#5a6efb",
+    color: "#5A67F8",
     fontWeight: "500",
     fontSize: 14,
   },
 
+  /** SECTIONS */
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginVertical: 10,
-    color: "#222",
-  },
-
-  /* Updated Card with Shadow */
-  card: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 12,
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#1A1A1A",
     marginBottom: 12,
-
-    // Shadow for Android + iOS
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    marginTop: 10,
   },
 
-  bulletPoint: {
-    width: 8,
-    height: 8,
-    backgroundColor: "#5a6efb",
-    borderRadius: 100,
-    marginRight: 12,
-    marginTop: 6,
+  scrollContainer: {
+    paddingBottom: 150,
+  },
+
+  /** NOTIFICATION CARDS */
+  card: {
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 14,
+    marginBottom: 15,
+
+    // Soft iOS-style shadow
+    shadowColor: "#000",
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
   },
 
   cardTitle: {
     fontSize: 15,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 4,
+    fontWeight: "700",
+    marginBottom: 6,
+    color: "#222",
   },
 
   cardDesc: {
     fontSize: 13,
     color: "#555",
+    marginBottom: 10,
   },
 
   timeText: {
-    marginLeft: 10,
     fontSize: 12,
     color: "#777",
-    alignSelf: "flex-end", // improved alignment
+    textAlign: "right",
+    fontStyle: "italic",
   },
 });
-
