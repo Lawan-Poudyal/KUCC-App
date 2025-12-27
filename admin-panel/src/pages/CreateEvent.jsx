@@ -1,0 +1,514 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import AdminLayout from '../layouts/AdminLayout';
+
+const SuccessToast = ({ message, onClose }) => {
+    return (
+        <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-slide-in z-50">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span>{message}</span>
+            <button onClick={onClose} className="ml-2 hover:text-gray-200 text-xl">×</button>
+        </div>
+    );
+};
+
+const CreateEvent = () => {
+    const navigate = useNavigate();
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [bannerPreview, setBannerPreview] = useState(null);
+
+    const [formData, setFormData] = useState({
+        eventName: '',
+        description: '',
+        date: '',
+        time: '',
+        location: '',
+        maxParticipants: '',
+        registrationFee: '',
+        eventType: '',
+        accessLevel: 'kucc-only',
+        banner: null
+    });
+
+    const [errors, setErrors] = useState({});
+    const [touched, setTouched] = useState({});
+
+    const eventTypes = [
+        'Workshop',
+        'Competition',
+        'Tournament',
+        'Seminar',
+        'Hackathon',
+        'Annual Event',
+        'Tech Talk',
+        'Other'
+    ];
+
+    const validateField = (name, value) => {
+        switch (name) {
+            case 'eventName':
+                return value.trim().length < 3 ? 'Event name must be at least 3 characters' : '';
+            case 'description':
+                return value.trim().length < 10 ? 'Description must be at least 10 characters' : '';
+            case 'date':
+                return !value ? 'Date is required' : '';
+            case 'time':
+                return !value ? 'Time is required' : '';
+            case 'location':
+                return value.trim().length < 3 ? 'Location must be at least 3 characters' : '';
+            case 'maxParticipants':
+                return !value || value < 1 ? 'Must be at least 1' : '';
+            case 'registrationFee':
+                return value === '' || value < 0 ? 'Fee must be 0 or greater' : '';
+            case 'eventType':
+                return !value ? 'Please select an event type' : '';
+            default:
+                return '';
+        }
+    };
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+
+        if (touched[name]) {
+            const error = validateField(name, value);
+            setErrors(prev => ({ ...prev, [name]: error }));
+        }
+    };
+
+    const handleBlur = (e) => {
+        const { name, value } = e.target;
+        setTouched(prev => ({ ...prev, [name]: true }));
+        const error = validateField(name, value);
+        setErrors(prev => ({ ...prev, [name]: error }));
+    };
+
+    const handleBannerUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                setErrors(prev => ({ ...prev, banner: 'File size must be less than 5MB' }));
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setBannerPreview(reader.result);
+                setFormData(prev => ({ ...prev, banner: file }));
+                setErrors(prev => ({ ...prev, banner: '' }));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        const newErrors = {};
+        Object.keys(formData).forEach(key => {
+            if (key !== 'banner' && key !== 'accessLevel') {
+                const error = validateField(key, formData[key]);
+                if (error) newErrors[key] = error;
+            }
+        });
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            setTouched(Object.keys(formData).reduce((acc, key) => ({ ...acc, [key]: true }), {}));
+            return;
+        }
+
+        // TODO: Send data to Supabase when backend is ready
+        console.log('Event Data:', formData);
+        setSuccessMessage('Event created successfully!');
+
+        setShowSuccess(true);
+
+        setFormData({
+            eventName: '',
+            description: '',
+            date: '',
+            time: '',
+            location: '',
+            maxParticipants: '',
+            registrationFee: '',
+            eventType: '',
+            accessLevel: 'kucc-only',
+            banner: null
+        });
+        setBannerPreview(null);
+        setErrors({});
+        setTouched({});
+
+        setTimeout(() => setShowSuccess(false), 3000);
+    };
+
+    const handleSaveDraft = () => {
+        // Save draft to localStorage
+        localStorage.setItem('eventDraft', JSON.stringify(formData));
+        setSuccessMessage('Event saved as draft!');
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000);
+    };
+
+    return (
+        <AdminLayout>
+            {showSuccess && (
+                <SuccessToast
+                    message={successMessage}
+                    onClose={() => setShowSuccess(false)}
+                />
+            )}
+
+            <div className="max-w-4xl mx-auto">
+                <div className="mb-6 flex items-center gap-4">
+                    <button
+                        onClick={() => navigate('/dashboard')}
+                        className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                    <h2 className="text-2xl font-bold" style={{ color: '#585F8A' }}>Create New Event</h2>
+                </div>
+
+                <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm p-8">
+                    <div className="mb-6">
+                        <h3 className="text-lg font-semibold mb-4" style={{ color: '#585F8A' }}>Event Details</h3>
+
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium mb-2">Event Banner</label>
+                            <div
+                                className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-gray-400 transition-colors"
+                                onClick={() => document.getElementById('banner-upload').click()}
+                            >
+                                {bannerPreview ? (
+                                    <div className="relative inline-block">
+                                        <img src={bannerPreview} alt="Preview" className="max-h-48 rounded-lg" />
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setBannerPreview(null);
+                                                setFormData(prev => ({ ...prev, banner: null }));
+                                            }}
+                                            className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="w-16 h-16 mx-auto mb-3 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#585F8A20' }}>
+                                            <svg className="w-8 h-8" style={{ color: '#585F8A' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
+                                        <p className="text-sm font-medium">Upload Event Banner (1800x800)</p>
+                                        <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
+                                    </>
+                                )}
+                            </div>
+                            <input
+                                id="banner-upload"
+                                type="file"
+                                accept="image/*"
+                                onChange={handleBannerUpload}
+                                className="hidden"
+                            />
+                            {errors.banner && <p className="text-red-500 text-xs mt-1">{errors.banner}</p>}
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-2">
+                                Event Name <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                name="eventName"
+                                value={formData.eventName}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${errors.eventName && touched.eventName
+                                    ? 'border-red-500 focus:ring-red-200'
+                                    : 'border-gray-300 focus:ring-blue-200'
+                                    }`}
+                                placeholder="Enter event name"
+                            />
+                            {errors.eventName && touched.eventName && (
+                                <p className="text-red-500 text-xs mt-1">{errors.eventName}</p>
+                            )}
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-2">
+                                Description <span className="text-red-500">*</span>
+                            </label>
+                            <textarea
+                                name="description"
+                                value={formData.description}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                rows={4}
+                                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all resize-none ${errors.description && touched.description
+                                    ? 'border-red-500 focus:ring-red-200'
+                                    : 'border-gray-300 focus:ring-blue-200'
+                                    }`}
+                                placeholder="Enter event description"
+                            />
+                            {errors.description && touched.description && (
+                                <p className="text-red-500 text-xs mt-1">{errors.description}</p>
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-2">
+                                    Date <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="date"
+                                    name="date"
+                                    value={formData.date}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${errors.date && touched.date
+                                        ? 'border-red-500 focus:ring-red-200'
+                                        : 'border-gray-300 focus:ring-blue-200'
+                                        }`}
+                                />
+                                {errors.date && touched.date && (
+                                    <p className="text-red-500 text-xs mt-1">{errors.date}</p>
+                                )}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-2">
+                                    Time <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="time"
+                                    name="time"
+                                    value={formData.time}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${errors.time && touched.time
+                                        ? 'border-red-500 focus:ring-red-200'
+                                        : 'border-gray-300 focus:ring-blue-200'
+                                        }`}
+                                />
+                                {errors.time && touched.time && (
+                                    <p className="text-red-500 text-xs mt-1">{errors.time}</p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-2">
+                                Location <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                name="location"
+                                value={formData.location}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${errors.location && touched.location
+                                    ? 'border-red-500 focus:ring-red-200'
+                                    : 'border-gray-300 focus:ring-blue-200'
+                                    }`}
+                                placeholder="Enter event location"
+                            />
+                            {errors.location && touched.location && (
+                                <p className="text-red-500 text-xs mt-1">{errors.location}</p>
+                            )}
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-2">
+                                Max Participants <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="number"
+                                name="maxParticipants"
+                                value={formData.maxParticipants}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                min="1"
+                                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${errors.maxParticipants && touched.maxParticipants
+                                    ? 'border-red-500 focus:ring-red-200'
+                                    : 'border-gray-300 focus:ring-blue-200'
+                                    }`}
+                                placeholder="Enter maximum participants"
+                            />
+                            {errors.maxParticipants && touched.maxParticipants && (
+                                <p className="text-red-500 text-xs mt-1">{errors.maxParticipants}</p>
+                            )}
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-2">
+                                Registration Fee (NPR) <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="number"
+                                name="registrationFee"
+                                value={formData.registrationFee}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                min="0"
+                                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${errors.registrationFee && touched.registrationFee
+                                    ? 'border-red-500 focus:ring-red-200'
+                                    : 'border-gray-300 focus:ring-blue-200'
+                                    }`}
+                                placeholder="Enter registration fee"
+                            />
+                            {errors.registrationFee && touched.registrationFee && (
+                                <p className="text-red-500 text-xs mt-1">{errors.registrationFee}</p>
+                            )}
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-2">
+                                Event Type <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                                name="eventType"
+                                value={formData.eventType}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${errors.eventType && touched.eventType
+                                    ? 'border-red-500 focus:ring-red-200'
+                                    : 'border-gray-300 focus:ring-blue-200'
+                                    }`}
+                            >
+                                <option value="">Select event type</option>
+                                {eventTypes.map(type => (
+                                    <option key={type} value={type}>{type}</option>
+                                ))}
+                            </select>
+                            {errors.eventType && touched.eventType && (
+                                <p className="text-red-500 text-xs mt-1">{errors.eventType}</p>
+                            )}
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-2">
+                                Access Level <span className="text-red-500">*</span>
+                            </label>
+                            <div className="space-y-3">
+                                <label
+                                    className="flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all"
+                                    style={{
+                                        borderColor: formData.accessLevel === 'kucc-only' ? '#585F8A' : '#e5e7eb',
+                                        backgroundColor: formData.accessLevel === 'kucc-only' ? '#585F8A10' : 'white'
+                                    }}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="accessLevel"
+                                        value="kucc-only"
+                                        checked={formData.accessLevel === 'kucc-only'}
+                                        onChange={handleChange}
+                                        className="mt-1"
+                                        style={{ accentColor: '#585F8A' }}
+                                    />
+                                    <div>
+                                        <p className="font-medium" style={{ color: '#585F8A' }}>KUCC Member Only</p>
+                                        <p className="text-sm text-gray-500">Only verified members can register</p>
+                                    </div>
+                                </label>
+
+                                <label
+                                    className="flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all"
+                                    style={{
+                                        borderColor: formData.accessLevel === 'all-students' ? '#585F8A' : '#e5e7eb',
+                                        backgroundColor: formData.accessLevel === 'all-students' ? '#585F8A10' : 'white'
+                                    }}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="accessLevel"
+                                        value="ku-students"
+                                        checked={formData.accessLevel === 'ku-students'}
+                                        onChange={handleChange}
+                                        className="mt-1"
+                                        style={{ accentColor: '#585F8A' }}
+                                    />
+                                    <div>
+                                        <p className="font-medium" style={{ color: '#585F8A' }}>All KU Students</p>
+                                        <p className="text-sm text-gray-500">All KU students can register</p>
+                                    </div>
+                                </label>
+
+                                <label
+                                    className="flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all"
+                                    style={{
+                                        borderColor: formData.accessLevel === 'any-students' ? '#585F8A' : '#e5e7eb',
+                                        backgroundColor: formData.accessLevel === 'any-students' ? '#585F8A10' : 'white'
+                                    }}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="accessLevel"
+                                        value="any-students"
+                                        checked={formData.accessLevel === 'any-students'}
+                                        onChange={handleChange}
+                                        className="mt-1"
+                                        style={{ accentColor: '#585F8A' }}
+                                    />
+                                    <div>
+                                        <p className="font-medium" style={{ color: '#585F8A' }}>Open For All</p>
+                                        <p className="text-sm text-gray-500">All the students of any universities can register</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex gap-4 pt-6">
+                        <button
+                            type="submit"
+                            className="flex-1 py-3 rounded-xl text-white font-medium hover:opacity-90 transition-all"
+                            style={{ backgroundColor: '#585F8A' }}
+                        >
+                            Create Event
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleSaveDraft}
+                            className="flex-1 py-3 border-2 rounded-xl font-medium hover:bg-gray-50 transition-all"
+                            style={{ borderColor: '#585F8A', color: '#585F8A' }}
+                        >
+                            Save as Draft
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <style jsx>{`
+                @keyframes slide-in {
+                    from {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+                .animate-slide-in {
+                    animation: slide-in 0.3s ease-out;
+                }
+            `}</style>
+        </AdminLayout>
+    );
+};
+
+export default CreateEvent;
