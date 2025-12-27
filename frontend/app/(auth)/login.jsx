@@ -1,19 +1,24 @@
-import { Text, View,Image,TextInput,TouchableOpacity,StyleSheet,KeyboardAvoidingView,Platform,ScrollView,Dimensions, SafeAreaView } from 'react-native';
-import React, { useState } from 'react';
-
+import { router } from "expo-router";
+import { useState } from 'react';
+import { Dimensions, Image, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 const {width,height}=Dimensions.get('window');
 
 export default function LoginScreen(){
     const [email,setEmail]=useState('yourname@gmail.com');
     const [password,setPassword]=useState('');
 
-    const handleLogin=()=>{
-        console.log('Login Pressed');
-    };
+   const handleLogin = () => {
+  console.log("Login Pressed");
+  router.replace("/(tabs)");
+};
 
-    const handleForgotPassword=()=>{
-        console.log('Forgot Password pressed');
-    };
+const handleForgotPassword = () => {
+  router.push({
+    pathname: "/(auth)/otp",
+    params: { email },
+  });
+};
+
     
     const handleInstagram=()=>{
         console.log('Instagram login');
@@ -87,7 +92,10 @@ export default function LoginScreen(){
                     </View>
 
                     <View style={styles.footer}>
-                        <Text style={styles.footerText}>Donot have a account?</Text>
+                        <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
+  <Text style={styles.footerText}>Donot have a account?</Text>
+</TouchableOpacity>
+
                         <Text style={styles.footerSubText}>Sign up with social media</Text>
 
                         <View style={styles.socialContainer}>

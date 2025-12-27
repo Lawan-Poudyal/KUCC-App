@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  StyleSheet, 
-  SafeAreaView,
+import { router } from "expo-router";
+import { useState } from 'react';
+import {
+  Dimensions,
   KeyboardAvoidingView,
   Platform,
+  SafeAreaView,
   ScrollView,
-  Dimensions
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
@@ -21,12 +22,14 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState('');
 
   const handleSignUp = () => {
-    console.log('Sign up pressed');
-  };
+  console.log("Sign up pressed");
+  router.push("/(auth)/otp");
+};
 
-  const handleLogin = () => {
-    console.log('Login pressed');
-  };
+const handleLogin = () => {
+  router.replace("/(auth)/login");
+};
+
 
   return (
     <SafeAreaView style={styles.container}>
