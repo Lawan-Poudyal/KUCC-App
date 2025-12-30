@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { signUpWithPassword } from "../../services/auth";
 
 const { width, height } = Dimensions.get("window");
 
@@ -22,13 +23,21 @@ export default function SignUpScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSignUp = () => {
-    if (!name.trim() || !phone.trim() || !email.trim() || !password.trim()) {
-      Alert.alert("Missing Information", "Please fill out all fields.");
-      return;
-    }
-    router.replace("/(tabs)");
-  };
+
+const handleSignUp = async () => {
+  if (!email || !password) {
+    Alert.alert("Fill all fields");
+    return;
+  }
+
+  try {
+   await signUpWithPassword(email, password, name, phone);
+    Alert.alert("Account created");
+    router.replace("/(auth)/login");
+  } catch (err) {
+    Alert.alert("Signup failed", err.message);
+  }
+};
 
   const handleLogin = () => {
     router.replace("/(auth)/login");

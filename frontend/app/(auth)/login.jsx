@@ -14,6 +14,7 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
+import { loginWithPassword } from "../../services/auth";
 
 const { width, height } = Dimensions.get("window");
 
@@ -21,27 +22,18 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
- const handleLogin = () => {
+const handleLogin = async () => {
   if (!email.trim() || !password.trim()) {
-    Alert.alert(
-      "Missing Information",
-      "Please enter both email and password."
-    );
+    Alert.alert("Missing Information", "Please enter both email and password.");
     return;
   }
 
-  // TEMP: replace with real auth later
-  const isValidUser = email === "test@gmail.com" && password === "123456";
-
-  if (!isValidUser) {
-    Alert.alert(
-      "Login Failed",
-      "Invalid email or password."
-    );
-    return;
+  try {
+    await loginWithPassword(email, password);
+    router.replace("/(tabs)");
+  } catch (err) {
+    Alert.alert("Login Failed", err.message);
   }
-
-  router.replace("/(tabs)");
 };
 
   const handleForgotPassword = () =>
