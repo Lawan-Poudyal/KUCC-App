@@ -1,6 +1,7 @@
 import { router } from "expo-router";
-import { useState } from 'react';
+import { useState } from "react";
 import {
+  Alert,
   Dimensions,
   KeyboardAvoidingView,
   Platform,
@@ -10,102 +11,96 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
-} from 'react-native';
+  View,
+} from "react-native";
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 
 export default function SignUpScreen() {
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('yourname@gmail.com');
-  const [password, setPassword] = useState('');
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleSignUp = () => {
-  console.log("Sign up pressed");
-  router.push("/(auth)/otp");
-};
+    if (!name.trim() || !phone.trim() || !email.trim() || !password.trim()) {
+      Alert.alert("Missing Information", "Please fill out all fields.");
+      return;
+    }
+    router.replace("/(tabs)");
+  };
 
-const handleLogin = () => {
-  router.replace("/(auth)/login");
-};
-
+  const handleLogin = () => {
+    router.replace("/(auth)/login");
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
       >
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
+          {/* HEADER */}
           <View style={styles.header}>
             <Text style={styles.headerText}>Hello</Text>
             <Text style={styles.headerText}>Create your</Text>
             <Text style={styles.headerText}>account !</Text>
           </View>
 
-          <View style={styles.formWrapper}>
-            <View style={styles.formContainer}>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Name</Text>
-                <TextInput
-                  style={styles.input}
-                  value={name}
-                  onChangeText={setName}
-                  placeholder=""
-                  placeholderTextColor="#B8B8C7"
-                />
-              </View>
+          {/* CARD */}
+          <View style={styles.cardWrapper}>
+            <View style={styles.card}>
+              <View style={styles.form}>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Name</Text>
+                  <TextInput style={styles.input} value={name} onChangeText={setName} />
+                </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Phone</Text>
-                <TextInput
-                  style={styles.input}
-                  value={phone}
-                  onChangeText={setPhone}
-                  placeholder=""
-                  placeholderTextColor="#B8B8C7"
-                  keyboardType="phone-pad"
-                />
-              </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Phone</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={phone}
+                    onChangeText={setPhone}
+                    keyboardType="phone-pad"
+                  />
+                </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Gmail</Text>
-                <TextInput
-                  style={styles.input}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="yourname@gmail.com"
-                  placeholderTextColor="#B8B8C7"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Gmail</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="yourname@gmail.com"
+                    placeholderTextColor="#A7A7B7"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Password</Text>
-                <TextInput
-                  style={styles.input}
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder=""
-                  placeholderTextColor="#B8B8C7"
-                  secureTextEntry
-                />
-              </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Password</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                  />
+                </View>
 
-              <TouchableOpacity 
-                style={styles.signUpButton}
-                onPress={handleSignUp}
-              >
-                <Text style={styles.signUpButtonText}>SIGN UP</Text>
-              </TouchableOpacity>
+                <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
+                  <Text style={styles.signUpButtonText}>SIGN UP</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
 
+          {/* FOOTER */}
           <View style={styles.footer}>
             <Text style={styles.footerText}>Already have an account?</Text>
             <TouchableOpacity onPress={handleLogin}>
@@ -121,99 +116,95 @@ const handleLogin = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#383F78',
+    backgroundColor: "#383F78",
   },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: width * 0.05,
-    paddingTop: height * 0.06,
-    paddingBottom: height * 0.04,
-  },
+ scrollContent: {
+  flexGrow: 1,
+  paddingTop: height * 0.06,
+  paddingBottom: height * 0.03,
+},
+
+  /* HEADER */
   header: {
-    marginBottom: height * 0.04,
-    paddingLeft: width * 0.03,
+    paddingHorizontal: width * 0.08,
+    marginBottom: height * 0.05,
   },
   headerText: {
     fontSize: width * 0.09,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: "700",
+    color: "#FFFFFF",
     lineHeight: width * 0.11,
   },
-  formWrapper: {
-    marginBottom: height * 0.03,
-  },
-  formContainer: {
-    backgroundColor: '#F5F5F5',
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
-    borderBottomLeftRadius: 40,
-    borderBottomRightRadius: 40,
-    padding: width * 0.08,
-    paddingTop: height * 0.06,
-    paddingBottom: height * 0.04,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 8,
-    transform: [{ rotate: '0deg' }],
-  },
+
+  /* CARD */
+ cardWrapper: {
+  alignItems: "center",
+  marginTop: height * 0.008,   
+},
+
+card: {
+  width: width * 0.92,
+  backgroundColor: "#F6F6F6",
+  borderRadius: 42,
+  transform: [{ rotate: "-9deg" }], 
+  paddingVertical: height * 0.03,
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 5 },
+  shadowOpacity: 0.16,
+  shadowRadius: 10,
+  elevation: 8,
+},
+
+form: {
+  transform: [{ rotate: "9deg" }],
+  paddingHorizontal: width * 0.085,
+  paddingTop: height * 0.015,
+},
+
   inputGroup: {
-    marginBottom: height * 0.03,
+    marginBottom: height * 0.02,
   },
   label: {
-    fontSize: width * 0.04,
-    color: '#9B9BAA',
-    marginBottom: 8,
-    fontWeight: '500',
+    fontSize: width * 0.038,
+    color: "#383F78",
+    marginBottom: 6,
   },
   input: {
     borderBottomWidth: 1,
-    borderBottomColor: '#D1D1D6',
-    paddingVertical: 10,
+    borderBottomColor: "#CFCFDB",
+    paddingVertical: 8,
     fontSize: width * 0.04,
-    color: '#333333',
+    color: "#333",
   },
+
   signUpButton: {
-    backgroundColor: '#5B5F8D',
-    borderRadius: 30,
-    paddingVertical: height * 0.022,
-    alignItems: 'center',
-    marginTop: height * 0.02,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 5,
+    marginTop: height * 0.015,
+    backgroundColor: "#5B5F8D",
+    borderRadius: 28,
+    paddingVertical: height * 0.018,
+    alignItems: "center",
   },
   signUpButtonText: {
-    color: '#FFFFFF',
+    color: "#FFF",
     fontSize: width * 0.04,
-    fontWeight: 'bold',
-    letterSpacing: 1.5,
+    fontWeight: "700",
+    letterSpacing: 1.2,
   },
+
+  /* FOOTER */
   footer: {
-    alignItems: 'center',
-    marginTop: height * 0.02,
-  },
+  alignItems: "center",
+  marginTop: height * 0.035, 
+},
   footerText: {
-    color: '#FFFFFF',
-    fontSize: width * 0.038,
-    marginBottom: 5,
+    color: "#FFF",
+    fontSize: width * 0.037,
   },
   loginText: {
-    color: '#FFFFFF',
-    fontSize: width * 0.038,
-    fontWeight: 'bold',
-    textDecorationLine: 'underline',
+    color: "#FFF",
+    fontSize: width * 0.037,
+    fontWeight: "700",
+    marginTop: 4,
+    textDecorationLine: "underline",
   },
 });

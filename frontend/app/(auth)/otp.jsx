@@ -1,15 +1,17 @@
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-    Dimensions,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import * as Animatable from "react-native-animatable";
@@ -19,7 +21,7 @@ const { width } = Dimensions.get("window");
 
 export default function OtpVerificationScreen() {
   const [otp, setOtp] = useState(["", "", "", ""]);
-  const [timer, setTimer] = useState(10);
+  const [timer, setTimer] = useState(60);
 
   const inputsRef = [useRef(), useRef(), useRef(), useRef()];
 
@@ -109,9 +111,18 @@ export default function OtpVerificationScreen() {
         </View>
 
         {/* Responsive Continue Button */}
-        <TouchableOpacity style={styles.continueBtn} activeOpacity={0.8}>
-          <Text style={styles.continueText}>Continue</Text>
-        </TouchableOpacity>
+      <TouchableOpacity
+  style={styles.continueBtn}
+  activeOpacity={0.8}
+  onPress={() => {
+    router.replace({
+      pathname: "/(tabs)",
+      params: { success: "Login Successful" },
+    });
+  }}
+>
+  <Text style={styles.continueText}>Continue</Text>
+</TouchableOpacity>
 
         {/* Keypad */}
         <View style={styles.keypad}>
@@ -128,21 +139,29 @@ export default function OtpVerificationScreen() {
             >
               <Text style={styles.keyText}>{n}</Text>
             </TouchableOpacity>
+            
             </Animatable.View>
           ))}
 
-          {/* placeholder */}
-          <View style={[styles.key, { backgroundColor: "transparent" }]} />
+      {/* empty spacer to center 0 */}
+<View style={styles.keyWrapper} />
 
-          {/* zero */}
-          <TouchableOpacity style={styles.key} onPress={() => handleKeyPress("0")}>
-            <Text style={styles.keyText}>0</Text>
-          </TouchableOpacity>
+{/* zero (centered, boxed) */}
+<View style={styles.keyWrapper}>
+  <TouchableOpacity style={styles.key} onPress={() => handleKeyPress("0")}>
+    <Text style={styles.keyText}>0</Text>
+  </TouchableOpacity>
+</View>
 
-          {/* backspace */}
-          <TouchableOpacity style={styles.key} onPress={handleBackspace}>
-            <Text style={styles.keyText}>⌫</Text>
-          </TouchableOpacity>
+{/* backspace (no box) */}
+<View style={styles.keyWrapper}>
+  <TouchableOpacity onPress={handleBackspace} style={styles.backspaceOnly}>
+    <Ionicons name="backspace-outline" size={28} color="#111" />
+  </TouchableOpacity>
+</View>
+
+
+
         </View>
       </KeyboardAvoidingView>
     </ScrollView>
@@ -154,8 +173,8 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: "#fff",
     alignItems: "center",
-    paddingVertical: 24,
-    paddingHorizontal: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
   },
 
   inner: {
@@ -167,8 +186,8 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 6,
-    marginBottom: 6,
+    marginTop: 4,
+    marginBottom: 2,
   },
 
   logo: {
@@ -176,25 +195,25 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: "700",
     color: "#4A4F75",
-    marginTop: 10,
+    marginTop: 6,
     textAlign: "center",
   },
 
   subText: {
     textAlign: "center",
-    fontSize: 14,
-    marginTop: 6,
+    fontSize: 13,
+    marginTop: 4,
     color: "#666",
-    paddingHorizontal: 28,
+    paddingHorizontal: 24,
   },
 
   otpContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: 28,
+    marginTop: 20,
   },
 
   otpBoxWrapper: {
@@ -202,12 +221,12 @@ const styles = StyleSheet.create({
   },
 
   otpBox: {
-   width: width * 0.16,
-    height: width * 0.16,
-    borderRadius: width * 0.04,
+   width: width * 0.14,
+    height: width * 0.14,
+    borderRadius: width * 0.035,
     backgroundColor: "#5A6285",
     color: "#fff",
-       fontSize: width * 0.075,
+       fontSize: width * 0.07,
     fontWeight: "700",
     textAlignVertical: "center",
     padding: 0,
@@ -235,18 +254,18 @@ const styles = StyleSheet.create({
   },
 
   continueBtn: {
-    marginTop: 24,
-    width: "85%", // responsive
+    marginTop: 18,
+    width: "82%", // responsive
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 14,
-    borderRadius: 36,
+    paddingVertical: 12,
+    borderRadius: 32,
     backgroundColor: "#4A4F75",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 6,
+    elevation: 4,
   },
 
   continueText: {
@@ -256,13 +275,13 @@ const styles = StyleSheet.create({
   },
 
   keypad: {
-    marginTop: 28,
+    marginTop: 16,
     width: "100%",
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    paddingHorizontal: 18,
-    paddingBottom: 40,
+    paddingHorizontal: 24,
+    paddingBottom: 20,
   },
    keyWrapper: {
     width: "30%",
@@ -271,9 +290,9 @@ const styles = StyleSheet.create({
 
   key: {
     width: "100%",
-    aspectRatio: 1.0,
-    marginVertical: 8,
-  borderRadius: width * 0.04,
+    aspectRatio: 1.15,
+    marginVertical: 6,
+  borderRadius: width * 0.035,
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
@@ -282,8 +301,16 @@ const styles = StyleSheet.create({
   },
 
   keyText: {
-        fontSize: width * 0.075,
+        fontSize: width * 0.065,
     fontWeight: "700",
     color: "#111",
   },
+ backspaceOnly: {
+  width: "100%",
+  aspectRatio: 1.15,   
+  marginVertical: 6,   
+  alignItems: "center",
+  justifyContent: "center",
+},
+
 });

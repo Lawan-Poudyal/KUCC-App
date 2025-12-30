@@ -8,9 +8,9 @@ export default function TabLayout() {
       tabBar={(props) => <CustomTabBar {...props} />}
     >
       <Tabs.Screen name="index" />
-      <Tabs.Screen name="profile" />
-      <Tabs.Screen name="notification" />
       <Tabs.Screen name="about" />
+      <Tabs.Screen name="notification" />
+      <Tabs.Screen name="profile" />
     </Tabs>
   );
 }
