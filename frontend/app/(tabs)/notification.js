@@ -1,5 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useState } from "react";
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,38 +14,95 @@ const notifications = {
     {
       title: "Registration open for Tech Talk 2025!",
       description:
-        "Registration for Tech Talk 2025 is now open! Seats are limited. Make sure to register before...",
+        "Registration for Tech Talk 2025 is now open! Seats are limited. Make sure to register before Dec 5, 2025.",
       time: "2 hr",
     },
     {
       title: "Club meeting today at 3 PM.",
-      description: "This is a reminder for today's club meeting at 3:00 PM...",
+      description: "This is a reminder for today's club meeting at 3:00 PM.",
       time: "5 hr",
     },
     {
       title: "New volunteering opportunity available.",
       description:
-        "Our club is partnering with KU Welfare Cell for a volunteering initiative...",
+        "Our club is partnering with KU Welfare Cell for a volunteering initiative.",
       time: "18 hr",
     },
   ],
-
   weekly: [
     {
       title: "Your event payment is confirmed.",
-      description: "We've received your payment for Hackfest 2025...",
+      description: "We've received your payment for Hackfest 2025.",
       time: "3d",
     },
     {
       title: "Your club membership has been approved.",
       description:
-        "Congratulations! Your membership request for KUCC has been approved...",
+        "Congratulations! Your membership request for KUCC has been approved.",
       time: "5d",
     },
   ],
 };
 
 export default function NotificationScreen() {
+  const [selectedNotification, setSelectedNotification] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  function openNotification(item) {
+    setLoading(true);
+
+    setTimeout(() => {
+      setSelectedNotification(item);
+      setLoading(false);
+    }, 2000); // simulate loading
+  }
+
+  function goBack() {
+    setSelectedNotification(null);
+  }
+
+  /* ---------------- FULL SCREEN LOADER ---------------- */
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#5A67F8" />
+        <Text style={styles.loadingText}>
+          Generating notification details...
+        </Text>
+      </View>
+    );
+  }
+
+  /* ---------------- DETAIL VIEW ---------------- */
+  if (selectedNotification) {
+    return (
+      <View style={styles.detailContainer}>
+        <TouchableOpacity style={styles.backButton} onPress={goBack}>
+          <Ionicons name="arrow-back" size={26} color="#333" />
+        </TouchableOpacity>
+
+        <Ionicons
+          name="notifications-outline"
+          size={60}
+          color="#5A67F8"
+          style={{ marginBottom: 20 }}
+        />
+
+        <Text style={styles.detailTitle}>
+          {selectedNotification.title}
+        </Text>
+        <Text style={styles.detailTime}>
+          {selectedNotification.time}
+        </Text>
+
+        <Text style={styles.detailDesc}>
+          {selectedNotification.description}
+        </Text>
+      </View>
+    );
+  }
+
+  /* ---------------- MAIN LIST (UNCHANGED STRUCTURE) ---------------- */
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -64,7 +123,11 @@ export default function NotificationScreen() {
         {/* Today */}
         <Text style={styles.sectionTitle}>Today</Text>
         {notifications.today.map((item, index) => (
-          <NotificationCard key={index} item={item} />
+          <NotificationCard
+            key={index}
+            item={item}
+            onPress={() => openNotification(item)}
+          />
         ))}
 
         {/* Earlier */}
@@ -72,25 +135,33 @@ export default function NotificationScreen() {
           Earlier this week
         </Text>
         {notifications.weekly.map((item, index) => (
-          <NotificationCard key={index} item={item} />
+          <NotificationCard
+            key={index}
+            item={item}
+            onPress={() => openNotification(item)}
+          />
         ))}
       </ScrollView>
     </View>
   );
 }
 
-function NotificationCard({ item }) {
+/* ---------------- CARD (UNCHANGED + onPress) ---------------- */
+function NotificationCard({ item, onPress }) {
   return (
-    <TouchableOpacity activeOpacity={0.8}>
+    <TouchableOpacity activeOpacity={0.8} onPress={onPress}>
       <View style={styles.card}>
         <Text style={styles.cardTitle}>{item.title}</Text>
-        <Text style={styles.cardDesc}>{item.description}</Text>
+        <Text style={styles.cardDesc} numberOfLines={2}>
+          {item.description}
+        </Text>
         <Text style={styles.timeText}>{item.time}</Text>
       </View>
     </TouchableOpacity>
   );
 }
 
+/* ---------------- STYLES (ORIGINAL + ADDED) ---------------- */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -99,7 +170,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
   },
 
-  /** HEADER */
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -113,7 +183,6 @@ const styles = StyleSheet.create({
     color: "#222",
   },
 
-  /** CLEAR BUTTON */
   clearButton: {
     alignSelf: "flex-end",
     marginVertical: 8,
@@ -125,7 +194,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
-  /** SECTIONS */
   sectionTitle: {
     fontSize: 17,
     fontWeight: "700",
@@ -138,14 +206,11 @@ const styles = StyleSheet.create({
     paddingBottom: 150,
   },
 
-  /** NOTIFICATION CARDS */
   card: {
     backgroundColor: "#fff",
     padding: 16,
     borderRadius: 14,
     marginBottom: 15,
-
-    // Soft iOS-style shadow
     shadowColor: "#000",
     shadowOpacity: 0.07,
     shadowRadius: 6,
@@ -171,5 +236,54 @@ const styles = StyleSheet.create({
     color: "#777",
     textAlign: "right",
     fontStyle: "italic",
+  },
+
+  /* LOADER */
+  loaderContainer: {
+    flex: 1,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  loadingText: {
+    marginTop: 15,
+    fontSize: 14,
+    color: "#555",
+  },
+
+  /* DETAIL */
+  detailContainer: {
+    flex: 1,
+    backgroundColor: "#F7F7F9",
+    paddingTop: 70,
+    paddingHorizontal: 24,
+    alignItems: "center",
+  },
+
+  backButton: {
+    position: "absolute",
+    top: 55,
+    left: 18,
+  },
+
+  detailTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+
+  detailTime: {
+    fontSize: 12,
+    color: "#777",
+    marginBottom: 20,
+  },
+
+  detailDesc: {
+    fontSize: 15,
+    color: "#444",
+    lineHeight: 22,
+    textAlign: "center",
   },
 });
