@@ -3,6 +3,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import './index.css';
 import CreateEvent from './pages/CreateEvent';
 import Dashboard from './pages/Dashboard';
+import EventManagement from './pages/EventManagement';
 import Login from './pages/Login';
 
 function App() {
@@ -25,6 +26,15 @@ function App() {
         element={
           <ProtectedRoute>
             <CreateEvent />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/events"
+        element={
+          <ProtectedRoute>
+            <EventManagement />
           </ProtectedRoute>
         }
       />
