@@ -12,17 +12,37 @@ function Login() {
 
     const handleLogin = async (e) => {
         e.preventDefault()
+        setError('')
 
-        const { error } = await supabase.auth.signInWithPassword({
+        // 1.Sign in using Supabase Auth
+        const { data, error:authError } = await supabase.auth.signInWithPassword({
             email,
             password
         })
-
-        if (error) {
-            setError(error.message)
-        } else {
-            navigate('/dashboard')
+        if (authError){
+            setError(authError.message)
+            return
         }
+
+        // 2.Check if user is admin
+        const {data: adminData, error:adminError}=await supabase
+        .from('admins')
+        .select('*')
+        .eq('id',data.user.id)
+        .single()
+
+        if(adminError || !adminData){
+            await supabase.auth.signOut()
+            setError('Access denied.You are not an admin')
+            return
+        }
+        if(!adminData.is_active){
+            await supabase.auth.signOut()
+            setError('Admin account is disabled.')
+            return
+        }
+          // 3. Success → Dashboard
+          navigate('/dashboard')
     }
 
     useEffect(() => {

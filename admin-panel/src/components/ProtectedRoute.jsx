@@ -4,24 +4,48 @@ import { supabase } from '../services/supabaseClient'
 
 function ProtectedRoute({ children }) {
     const [loading, setLoading] = useState(true)
-    const [session, setSession] = useState(null)
+    const [isAdmin,setIsAdmin]=useState(false)
 
-    useEffect(() => {
-        const getSession = async () => {
-            const { data } = await supabase.auth.getSession()
-            setSession(data.session)
+    useEffect(()=>{
+        const checkAdmin=async()=>{
+            //1 .Get session to cheeck login
+            const {data: sessionData}=await supabase.auth.getSession()
+
+            if(!sessionData.session){
+                setLoading(false)
+                return
+            }
+
+            //2 .Check admin table to verify admin
+            const {data:adminData,error}=await supabase
+            .from('admins')
+            .select('id, is_active')
+            .eq('id', sessionData.session.user.id)
+            .single()
+
+            if(!error && adminData?.is_active){
+                setIsAdmin(true)
+            }else{
+                // If not admin -> logout
+                await supabase.auth.signOut()
+            }
             setLoading(false)
         }
-        getSession()
-    }, [])
+        checkAdmin()
+    },[])
 
-    if (loading) return <p>Loading...</p>
-
-    if (!session) {
-        return <Navigate to="/login" replace />
+    if(loading){
+        return  <p>Checking admin access...</p>
     }
-
+    if(!isAdmin){
+        return <Navigate to='/login' replace/>
+    }
     return children
 }
 
 export default ProtectedRoute
+
+{/*“Authentication verifies user identity,
+ while authorization ensures role-based access using
+  a protected route that validates admin privileges 
+  from the database.” */}
