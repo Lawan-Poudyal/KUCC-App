@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import AdminLayout from '../layouts/AdminLayout';
+import { supabase } from '../services/supabaseClient';
 
 const SuccessToast = ({ message, onClose }) => {
     return (
@@ -15,11 +16,13 @@ const SuccessToast = ({ message, onClose }) => {
 };
 
 const CreateEvent = () => {
+  const { id } = useParams(); // if id exists → edit mode
     const navigate = useNavigate();
     const [showSuccess, setShowSuccess] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [bannerPreview, setBannerPreview] = useState(null);
 
+    // The main object holding all form values (name, date, fee, etc.) is formData
     const [formData, setFormData] = useState({
         eventName: '',
         description: '',
@@ -89,23 +92,26 @@ const CreateEvent = () => {
 
     const handleBannerUpload = (e) => {
         const file = e.target.files[0];
-        if (file) {
-            if (file.size > 5 * 1024 * 1024) {
+        if(!file) return;
+
+        
+            if (file.size > 5 * 1024 * 1024) { //5MB
                 setErrors(prev => ({ ...prev, banner: 'File size must be less than 5MB' }));
                 return;
             }
 
             const reader = new FileReader();
             reader.onloadend = () => {
-                setBannerPreview(reader.result);
-                setFormData(prev => ({ ...prev, banner: file }));
+                setBannerPreview(reader.result);  // preview new banner
+                setFormData(prev => ({ ...prev, banner: file })); // mark new banner for upload
                 setErrors(prev => ({ ...prev, banner: '' }));
             };
             reader.readAsDataURL(file);
-        }
-    };
+        };
+  
 
-    const handleSubmit = (e) => {
+    // this handles three major tasks: Validation,File Storage and database insertion
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         const newErrors = {};
@@ -122,32 +128,109 @@ const CreateEvent = () => {
             return;
         }
 
-        // TODO: Send data to Supabase when backend is ready
-        console.log('Event Data:', formData);
-        setSuccessMessage('Event created successfully!');
+      try{
+        // Upload banner image
+        let bannerUrl= null;
 
-        setShowSuccess(true);
+       
+// Upload new banner only if selected
+        if(formData.banner){
+            const bannerFile=formData.banner;
+            console.log(bannerFile);
+            const fileName= `${Date.now()}_${bannerFile.name}`;
+            console.log(fileName);
 
-        setFormData({
-            eventName: '',
-            description: '',
-            date: '',
-            time: '',
-            location: '',
-            maxParticipants: '',
-            registrationFee: '',
-            eventType: '',
-            accessLevel: 'kucc-only',
-            banner: null
-        });
-        setBannerPreview(null);
+            const {error: uploadError}= await supabase.storage
+            .from('event-banners')
+            .upload(fileName,bannerFile);
+
+            if(uploadError) throw uploadError;
+
+            const {data}=supabase.storage
+            .from('event-banners')
+            .getPublicUrl(fileName);
+
+            bannerUrl= data.publicUrl;
+            console.log(bannerUrl);
+        }else if(bannerPreview){
+              // Keep existing banner URL if no new file selected
+            bannerUrl=bannerPreview;
+        }
+
+        if(id){
+            // update existing event
+            const {error: updateError}=await supabase
+            .from('events')
+            .update({
+                title: formData.eventName,
+                description: formData.description,
+                event_date: formData.date,
+                event_time:formData.time,
+                location: formData.location,
+                max_participants: Number(formData.maxParticipants),
+                registration_fee:Number(formData.registrationFee),
+                event_type: formData.eventType,
+                access_level: formData.accessLevel,
+                banner_url: bannerUrl || bannerPreview // keep old banner if new not uploaded
+            })
+            .eq('id',id);
+
+            if(updateError) throw updateError;
+
+            setSuccessMessage('Event updated successfully!');
+            setShowSuccess(true);
+            setTimeout(()=>{
+                setShowSuccess(false);
+                navigate('/dashboard');
+            },2000);
+
+        }else{
+            // create new event into database 
+            const {error:insertError}= await supabase
+            .from('events')
+            .insert({
+                title: formData.eventName,
+                description: formData.description,
+                event_date: formData.date,
+                event_time: formData.time,
+                location: formData.location,
+                max_participants: Number(formData.maxParticipants),
+                registration_fee: Number(formData.registrationFee),
+                event_type: formData.eventType,
+                access_level: formData.accessLevel,
+                banner_url: bannerUrl
+            });
+    
+            if(insertError) throw insertError;
+    
+            setSuccessMessage('Event created successfully');
+            setShowSuccess(true);
+
+            // reset form for new event
+            setFormData({
+                eventName:'',
+                description:'',
+                date:'',
+                time:'',
+                location:'',
+                maxParticipants:'',
+                registrationFee:'',
+                eventType:'',
+                accessLevel:'kucc-only',
+                banner: null
+            });
+            setBannerPreview(null);
+         
+        }
         setErrors({});
         setTouched({});
+    }catch(err){
+        console.error('Error:',err);
+        alert('Failed to save event:'+err.message);
+    }
+};
 
-        setTimeout(() => setShowSuccess(false), 3000);
-    };
-
-    const handleSaveDraft = () => {
+ const handleSaveDraft = () => {
         // Save draft to localStorage
         localStorage.setItem('eventDraft', JSON.stringify(formData));
         setSuccessMessage('Event saved as draft!');
@@ -155,6 +238,39 @@ const CreateEvent = () => {
         setTimeout(() => setShowSuccess(false), 3000);
     };
 
+// fetch event data for editing
+useEffect(()=>{
+if (!id) return;
+
+const fetchEvent=async () => {
+    const {data,error}=await supabase
+    .from('events')
+    .select('*')
+    .eq('id',id)
+    .single();
+
+    if(error){
+        alert('Failed to fetch event:' +error.message);
+        return;
+    }
+
+    setFormData({
+        eventName: data.title,
+        description: data.description,
+        date: data.event_date,
+        time: data.event_time,
+        location: data.location,
+        maxParticipants: data.max_participants,
+        registrationFee: data.registration_fee,
+        eventType: data.event_type,
+        accessLevel: data.access_level,
+        banner: null
+    });
+    setBannerPreview(data.banner_url || null);
+};
+fetchEvent();
+},[id]);
+        
     return (
         <AdminLayout>
             {showSuccess && (
@@ -174,7 +290,8 @@ const CreateEvent = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
-                    <h2 className="text-2xl font-bold" style={{ color: '#585F8A' }}>Create New Event</h2>
+                    <h2 className="text-2xl font-bold" style={{ color: '#585F8A' }}>
+                        {id ? 'Edit Event' : 'Create New Event'}</h2>
                 </div>
 
                 <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm p-8">
@@ -478,7 +595,7 @@ const CreateEvent = () => {
                             className="flex-1 py-3 rounded-xl text-white font-medium hover:opacity-90 transition-all"
                             style={{ backgroundColor: '#585F8A' }}
                         >
-                            Create Event
+                          {id ? 'Update Event' : 'Create Event'}
                         </button>
                         <button
                             type="button"
@@ -488,11 +605,11 @@ const CreateEvent = () => {
                         >
                             Save as Draft
                         </button>
-                    </div>
+                  </div>
                 </form>
             </div>
 
-            <style jsx>{`
+            <style>{`
                 @keyframes slide-in {
                     from {
                         transform: translateX(100%);
