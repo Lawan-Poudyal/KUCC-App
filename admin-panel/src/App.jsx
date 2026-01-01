@@ -8,6 +8,7 @@ import MembershipApproval from './pages/MembershipApproval';
 import Notification from './pages/Notification'
 import Events from './pages/Events';
 
+
 function App() {
   return (
     <Routes>
@@ -24,7 +25,7 @@ function App() {
       />
 
       <Route
-        path="/create-event/"
+        path="/create-event"
         element={
           <ProtectedRoute>
             <CreateEvent />
