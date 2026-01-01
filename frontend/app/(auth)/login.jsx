@@ -81,6 +81,7 @@ const [focusedInput, setFocusedInput] = useState(null);
          
               <View style={styles.form}>
                 {/* EMAIL */}
+                      <Text style={styles.label}>Email</Text>
                <View style={[
     styles.inputBox,
     focusedInput === "email" && styles.inputFocused,
