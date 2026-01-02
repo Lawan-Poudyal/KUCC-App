@@ -1,5 +1,7 @@
 import { Bell, Send } from "lucide-react";
 import { useState } from "react";
+import { supabase } from "../services/supabaseClient";
+import { createNotification } from "../services/notificationService.js";
 
 const SEND_TO_OPTIONS = [
   "All Members",
@@ -28,13 +30,49 @@ export default function Notification() {
     }));
   }
 
-  function handleSubmit(type) {
-    const payload = {
-      ...form,
+  async function handleSubmit(type) {
+   try {
+    const {data: {session}}=await supabase.auth.getSession();
+
+    if(!session){
+      alert('Not authenticated');
+      return;
+    }
+   
+    const payload={
+      title:form.title,
+      message:form.message,
+      send_to: form.sendTo,
+      priority: form.priority,
       status: type,
+       scheduled_at: form.schedule
+      ? `${form.date} ${form.time}`
+      : null,
+      created_by:session.user.id,
     };
-    console.log("Notification Payload", payload);
+
+    await createNotification(payload);
+
+    alert(
+      type === "sent"
+      ? "Notification sent successfully"
+      : "Notification saved as draft"
+    );
+
+    // reset form
+    setForm({
+      sendTo:'All Members',
+      title:"",
+      message:"",
+      priority:"normal",
+      schedule: false,
+      date:"",
+      time: "",
+    });
+  }catch(error){
+    alert("Failed to save notification:",error.message);
   }
+}
   return (
     <div className="min-h-screen bg-gray-100 p-10">
       <div className="bg-white max-w-4xl mx-auto rounded-xl shadow-md p-8">

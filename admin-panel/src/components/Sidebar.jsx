@@ -31,10 +31,10 @@ const Sidebar = () => {
 
     const navItems = [
         { name: 'Dashboard', path: '/dashboard' },
-        { name: 'Events', path: '/events' },
+        { name: 'Events', path: '/event-management' },
         { name: 'Workshops', path: '/workshops' },
-        { name: 'Notifications', path: '/notifications' },
-        { name: 'Approvals', path: '/approvals' },
+        { name: 'Notifications', path: '/sendnotification' },
+        { name: 'Approvals', path: '/membership' },
         { name: 'Members', path: '/members' },
     ];
 
