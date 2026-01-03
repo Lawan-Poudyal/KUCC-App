@@ -5,24 +5,25 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/kucc-logo.png",
-
+    "scheme": "kuccapp",
+    
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/kucc-logo.png",
         "backgroundColor": "#E6F4FE"
       }
     },
-
     "plugins": [
       "expo-router",
-     [
-  "expo-splash-screen",
-  {
-    "image": "./assets/kucc-logo.png",
-    "resizeMode": "contain",
-    "backgroundColor": "#E6F4FE"
-  }
-]
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/kucc-logo.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#E6F4FE"
+        }
+      ],
+      "expo-web-browser"
     ]
   }
 }
