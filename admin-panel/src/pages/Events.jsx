@@ -38,7 +38,6 @@ const Events = () => {
         banner.png
       */
      let bannerPath=null;
-
      if(event.banner_url){
         bannerPath=event.banner_url.split('/event-banners/')[1];
      }

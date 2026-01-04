@@ -1,5 +1,8 @@
 import { Eye } from "lucide-react";
 import { useEffect, useState } from "react";
+import { getMembershipsByStatus, updateMembershipStatus } from "../services/memberService.js";
+import { supabase } from "../services/supabaseClient";
+import AdminLayout from "../layouts/AdminLayout"
 
 const STATUS={
   PENDING: "pending",
@@ -7,69 +10,50 @@ const STATUS={
   REJECTED: "rejected", 
 };
 
-const MOCK_DATA=[
-    {
-        id:"mem_001",
-        fullName:"Ayush Paudel",
-        member_Code:"KU-CE-2024-04",
-        applied_at:"20 Dec,2025",
-        payment_amount:500,
-        payment_method: "Digital Wallet",
-        status:STATUS.PENDING,
-    },
-    {
-        id:"mem_002",
-        fullName:"Sujan Thapa",
-        member_Code:"KU-CE-2024-05",
-        applied_at:"22 Dec,2025",
-        payment_amount:500,
-        payment_method: "Bank Wallet",
-        status:STATUS.APPROVED,
-    },
-    {
-        id:"mem_003",
-        fullName:"Ramesh Karki",
-        member_Code:"KU-CE-2024-06",
-        applied_at:"25 Dec,2025",
-        payment_amount:500,
-        payment_method: "Digital Wallet",
-        status:STATUS.REJECTED,
-    },
-
-];
-
-
-async function fetchMembershipsByStatus(status){
-    return MOCK_DATA.filter((m)=> m.status === status);
-}
-async function updateMembershipStatus(id,status){
-return true;
-}
-
 const MembershipApproval = () => {
     const [activeStatus,setActiveStatus]=useState(STATUS.PENDING);
     const [memberships,setMemberships]=useState([]);
     const [loading,setLoading]=useState(false);
 
     
-    async function loadMemberships() {
+   // load memberships by status
+   const loadMemberships=async () => {
+    try {
         setLoading(true);
-        const data=await fetchMembershipsByStatus(activeStatus);
+        const data=await getMembershipsByStatus(activeStatus);
         setMemberships(data);
+    } catch (error) {
+        console.error("Failed to load memberships:",error.message);
+        
+    }finally{
         setLoading(false);
     }
+   };
     
-    /*fetch when tab changes*/
+    {/*fetch when tab changes*/}
     useEffect(()=>{
         loadMemberships();
     },[activeStatus]);
 
-async function handleStatusChange(id,newStatus) {
-    await updateMembershipStatus(id,newStatus);
-    loadMemberships();
-}
+// approve / reject
+const handleStatusChange=async (id,newStatus) => {
+    try {
+        const {data: {user},}=await supabase.auth.getUser();
+
+        if(!user){
+            alert("Admin not authorized");
+            return;
+        }
+        await updateMembershipStatus(id,newStatus,user.id);
+        loadMemberships();
+        } catch (error) {          
+        alert("Failed to update status:",error.message);
+    } 
+};
 
     return(
+       
+        <AdminLayout>
         <div className="min-h-screen bg-gray-100 p-10">
             <div className="bg-white rounded-xl shadow-md p-6">
                 {/*Title*/}
@@ -82,7 +66,8 @@ async function handleStatusChange(id,newStatus) {
                         key={status}
                         onClick={()=> setActiveStatus(status)}
                         className={`px-6 py-2 rounded-md font-medium capitalize transition ${
-                            activeStatus === status ? "bg-[#383F78] text-white"
+                            activeStatus === status 
+                            ? "bg-[#383F78] text-white"
 : "bg-gray-200 text-gray-600 hover:bg-gray-300" }`}>
     {status}
 </button>
@@ -118,31 +103,49 @@ async function handleStatusChange(id,newStatus) {
                                     memberships.map((m)=>(
                                         <tr key={m.id} className="border-t hover:bg-gray-50">
 
+                                             {/* Member */}
                                             <td className="p-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-full bg-[#383F78] text-white flex items-center justify-center font-semibold">
-                                                        {m.fullName[0]}
+                                                        {m.full_name?.[0]}
                                                     </div>
 
                                                     <div>
-                                                        <p className="font-medium">{m.fullName}</p>
-                                                        <p className="text-sm text-gray-500">{m.member_Code}</p>
+                                                        <p className="font-medium">{m.full_name}</p>
+                                                        <p className="text-sm text-gray-500">{m.member_code || "-"}</p>
                                                     </div>
                                                 </div>
                                             </td>
+                                            
+                                              {/* Applied */}
+                                            <td className="p-4">
+                                                {new Date(m.applied_at).toLocaleDateString()}
+                                                </td>
 
-                                            <td className="p-4">{m.applied_at}</td>
-                                            <td className="p-4">NPR {m.payment_amount}</td>
+                                                {/*Amount */}
+                                            <td className="p-4">
+                                                NPR {m.payment_amount}
+                                                </td>
+
+                                                {/* Method */}
                                             <td className="p-4">{m.payment_method}</td>
+
+                                            {/* Status */}
                                             <td className="p-4 capitalize">{m.status}</td>
 
+
+                                              
+                                                {/* Actions */}
                                             <td className="p-4">
                                                 <div className="flex justify-center gap-3">
                                                     {activeStatus === STATUS.PENDING && (
                                                         <>
                                                         <button onClick={()=> 
                                                             handleStatusChange(m.id,STATUS.APPROVED)
-                                                        } className="px-4 py-2 bg-[#383F78] text-white rounded-md">Approve</button>
+                                                        } 
+                                                        className="px-4 py-2 bg-[#383F78] text-white rounded-md">
+                                                            Approve
+                                                            </button>
 
                                                         <button onClick={()=>
                                                             handleStatusChange(
@@ -150,9 +153,13 @@ async function handleStatusChange(id,newStatus) {
                                                                 STATUS.REJECTED
                                                             )
                                                         }
-                                                        className="px-4 py-2 border border-red-500 text-red-500 rounded-md">Reject</button>
+                                                        className="px-4 py-2 border border-red-500 text-red-500 rounded-md">
+                                                            Reject
+                                                            </button>
                                                         </>
                                                     )}
+
+
                                                     <button className="p-2 border rounded-md">
                                                         <Eye size={18}/>
                                                     </button>
@@ -168,6 +175,8 @@ async function handleStatusChange(id,newStatus) {
                 </div>               
             </div>
         </div>
+
+        </AdminLayout>
     );  
 }
 export default MembershipApproval;

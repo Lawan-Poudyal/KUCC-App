@@ -40,3 +40,101 @@ export const updateEvent= async(id,payload)=>{
     if(error) throw error;
     return data;
 };
+
+// count registrations for event (Dashboard)
+export const getEventRegistrationsCount=async (eventId) => {
+    if(!eventId) return 0;
+
+    const {count,error}=await supabase
+    .from('event_registrations')
+    .select("*",{count:"exact"}
+    )
+    .eq("event_id",eventId);
+
+    if(error) throw error;
+    return count || 0;
+};
+
+// get all registrations (Admin page)
+export const getAllEventRegistrations=async () => {
+    const {data,error}= await supabase
+    .from('event_registrations')
+    .select(`
+      id,
+      status,
+      user_id,
+      event_id 
+    `)
+    .order("created_at", {ascending: false});
+
+    if(error) throw error;
+    return data;
+}
+
+// approve/reject registrations
+export const updateRegistrationStatus=async (id,status) => {
+    const {error}=await supabase
+    .from("event_registrations")
+    .update({status})
+    .eq("id",id);
+
+    if(error) throw error;
+    
+};
+
+// publish the event
+
+export const publishEvent=async (eventId) => {
+  const {error}=await supabase
+  .from("events")
+  .update({status:"active"})
+  .eq("id",eventId);
+
+  if(error) throw error;
+  
+};
+
+// unpublish the event
+export const unpublishEvent=async (eventId) => {
+    const {error}=await supabase
+    .from("events")
+    .update({status:"draft"})
+    .eq("id",eventId);
+
+    if(error) throw error;
+    
+};
+
+// for EventDetails.jsx file
+export const getEventById= async (eventId) => {
+    const {data,error}=await supabase
+    .from("events")
+    .select(`
+      id,
+      title,
+      description,
+      event_date,
+      event_time,
+      max_participants,
+      status,
+      created_at
+    `)
+    .eq("id",eventId)
+    .single();
+
+    if(error) throw error;
+
+    // get registration count
+    const {count, error: countError}=await supabase
+    .from("event_registrations")
+    .select("*", {count:"exact" , head:true})
+    .eq("event_id",eventId);
+
+    if(countError) throw countError;
+
+    return {
+        ...data,
+        registered: count || 0,
+    };
+    
+};

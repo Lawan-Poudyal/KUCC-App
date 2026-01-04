@@ -7,6 +7,11 @@ import Login from './pages/Login';
 import MembershipApproval from './pages/MembershipApproval';
 import Notification from './pages/Notification'
 import Events from './pages/Events';
+import EventRegistrations from './pages/EventRegistrations';
+import Members from './pages/Members';
+import EventManagement from './pages/EventManagement';
+import EventDetails from './pages/EventDetails';
+import CertificateGenerator from './pages/CertificateGenerator';
 
 
 function App() {
@@ -41,9 +46,7 @@ function App() {
           </ProtectedRoute>
         }
       />
-
-
-      
+    
 <Route 
 path="/events"
 element={
@@ -53,6 +56,23 @@ element={
 }
 />
 
+<Route
+path="/event-registrations"
+element={
+  <ProtectedRoute>
+    <EventRegistrations/>
+  </ProtectedRoute>
+}
+/>
+
+<Route
+path='/members'
+element={
+  <ProtectedRoute>
+    <Members/>
+  </ProtectedRoute>
+}
+/>
       <Route 
       path='/membership'
       element={
@@ -70,6 +90,36 @@ element={
         </ProtectedRoute>
       }
       /> 
+
+      <Route
+      path="/event-management"
+      element={
+        <ProtectedRoute>
+          <EventManagement/>
+        </ProtectedRoute>
+      }
+      />
+
+      <Route
+      path="/event-management/:eventId"
+      element={
+        <ProtectedRoute>
+          <EventDetails/>
+        </ProtectedRoute>
+      }
+      />
+
+      <Route
+      path="/certificate-generator"
+      element={
+       <ProtectedRoute>
+       <CertificateGenerator/>
+       </ProtectedRoute>
+
+      }
+      />
+
+     
 
 
     </Routes>
