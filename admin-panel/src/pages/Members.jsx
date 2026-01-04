@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { getApprovedMembers } from '../services/memberService.js';
+import { getMembershipsByStatus } from '../services/memberService.js';
 import AdminLayout from '../layouts/AdminLayout';
 
 const Members = () => {
@@ -12,10 +12,10 @@ const Members = () => {
 
     const fetchMembers=async () => {
         try {
-            const data=await getApprovedMembers();
+            const data=await getMembershipsByStatus("approved");
             setMembers(data);
         } catch (error) {
-            console.error(error.message);
+            console.error("Failed to fetch members:",error.message);
         }finally{
             setLoading(false);
         }
@@ -47,7 +47,7 @@ const Members = () => {
                                     {m.full_name}
                                 </td>
                                 <td className='px-4 py-3'>
-                                    {m.member_code}
+                                    {m.member_code || "-"}
                                 </td>
                                 <td className='px-4 py-3'>
                                     Rs.{m.payment_amount}
@@ -58,7 +58,6 @@ const Members = () => {
                                 <td className='px-4 py-3'>
                                     {new Date(m.applied_at).toLocaleDateString()}
                                 </td>
-
                             </tr>
                         ))}
                     </tbody>

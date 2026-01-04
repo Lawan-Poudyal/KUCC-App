@@ -23,6 +23,7 @@
 // export default Sidebar;
 
 import { useLocation, useNavigate } from 'react-router-dom';
+import clubLogo from '../assets/kucc.png';
 import { supabase } from '../services/supabaseClient';
 
 const Sidebar = () => {
@@ -32,7 +33,7 @@ const Sidebar = () => {
     const navItems = [
         { name: 'Dashboard', path: '/dashboard' },
         { name: 'Events', path: '/event-management' },
-        { name: 'Workshops', path: '/workshops' },
+        { name: 'Certificates', path: '/certificate-generator' },
         { name: 'Notifications', path: '/sendnotification' },
         { name: 'Approvals', path: '/membership' },
         { name: 'Members', path: '/members' },
@@ -46,8 +47,11 @@ const Sidebar = () => {
 
     return (
         <aside className="w-64 bg-white shadow-md p-5 hidden md:block">
-            <div className="text-2xl font-bold mb-8" style={{ color: '#585F8A' }}>
-                Dept Admin
+             <div
+                className="mb-8 cursor-pointer"
+                onClick={() => navigate('/dashboard')}
+            >
+                <img src={clubLogo} alt="Club Logo"  className='w-32 h-auto'/>
             </div>
 
             <nav className="space-y-4">

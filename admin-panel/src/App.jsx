@@ -11,6 +11,7 @@ import EventRegistrations from './pages/EventRegistrations';
 import Members from './pages/Members';
 import EventManagement from './pages/EventManagement';
 import EventDetails from './pages/EventDetails';
+import CertificateGenerator from './pages/CertificateGenerator';
 
 
 function App() {
@@ -107,6 +108,18 @@ element={
         </ProtectedRoute>
       }
       />
+
+      <Route
+      path="/certificate-generator"
+      element={
+       <ProtectedRoute>
+       <CertificateGenerator/>
+       </ProtectedRoute>
+
+      }
+      />
+
+     
 
 
     </Routes>
