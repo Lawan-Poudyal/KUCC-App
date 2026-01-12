@@ -1,0 +1,75 @@
+# ----------------------------
+# ENV FILES (all frameworks)
+# ----------------------------
+.env
+.env.*
+expo-env.d.ts
+
+# ----------------------------
+# Node / Express
+# ----------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build + output
+dist/
+build/
+.out/
+.cache/
+
+# Express temp
+*.log
+logs/
+tmp/
+coverage/
+
+# ----------------------------
+# React (Vite / CRA / Next.js)
+# ----------------------------
+# Vite
+vite.config.ts.timestamp*
+.vite/
+
+# Next.js
+.next/
+out/
+
+# CRA / General
+build/
+
+# ----------------------------
+# Expo / React Native
+# ----------------------------
+.expo/
+.expo-shared/
+.expo/web-build/
+android/
+ios/
+
+# Metro bundler cache
+.metro-cache/
+
+# Gradle
+.gradle/
+*.keystore
+
+# ----------------------------
+# TypeScript
+# ----------------------------
+*.tsbuildinfo
+
+# ----------------------------
+# OS files
+# ----------------------------
+.DS_Store
+Thumbs.db
+
+# ----------------------------
+# IDE / Editor
+# ----------------------------
+.vscode/
+.idea/
+*.swp
