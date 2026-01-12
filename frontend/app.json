@@ -5,6 +5,8 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/kucc-logo.png",
+    "scheme": "kuccapp",
+    
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/kucc-logo.png",

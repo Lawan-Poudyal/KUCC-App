@@ -1,5 +1,9 @@
 import { Stack } from "expo-router";
 
+export const unstable_settings = {
+  initialRouteName: "index",
+};
+
 export default function AuthLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
@@ -7,7 +11,6 @@ export default function AuthLayout() {
       <Stack.Screen name="login" />
       <Stack.Screen name="signup" />
       <Stack.Screen name="email-sent" />
-  
     </Stack>
   );
 }
