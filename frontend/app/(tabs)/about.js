@@ -8,7 +8,7 @@ if (Platform.OS === "android") {
     UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const defaultImage = require("../../assets/kucclogo.png");
+const defaultImage = require("../../assets/kucc-logo.png");
 const { width } = Dimensions.get("window");
 
 export default function About() {
