@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import {
   Dimensions,
   ScrollView,
@@ -14,6 +14,7 @@ import {
 const { width } = Dimensions.get("window");
 
 export default function Homepage() {
+  const { success } = useLocalSearchParams();
   const router = useRouter();
 
   return (
@@ -21,8 +22,14 @@ export default function Homepage() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.greeting}>Hey, John Doe</Text>
-        <Text style={styles.subGreeting}>Lets start exploring</Text>
-
+        <Text style={styles.subGreeting}>Lets start exploring!</Text>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      {success && (
+        <Text style={{ fontSize: 12, fontWeight: "500", color: "#383F78" }}>
+          {success}
+        </Text>
+      )}
+    </View>
         <TextInput
           placeholder="Search anything"
           placeholderTextColor="#9E9E9E"
