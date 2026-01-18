@@ -12,6 +12,7 @@ import Members from './pages/Members';
 import EventManagement from './pages/EventManagement';
 import EventDetails from './pages/EventDetails';
 import CertificateGenerator from './pages/CertificateGenerator';
+import AdminManagement from './components/AdminManagement';
 
 
 function App() {
@@ -20,19 +21,21 @@ function App() {
       <Route path="/" element={<Navigate to="/dashboard" />} />
       <Route path="/login" element={<Login />} />
 
+      {/* Dashboard → accessible to both editor and master */}
       <Route
         path="/dashboard"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['editor','master']}>
             <Dashboard />
           </ProtectedRoute>
         }
       />
 
+  {/* Create & Edit Events → only editor */}
       <Route
         path="/create-event"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['editor']}>
             <CreateEvent />
           </ProtectedRoute>
         }
@@ -41,60 +44,69 @@ function App() {
       <Route
         path="/edit-event/:id"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['editor']}>
             <CreateEvent />
           </ProtectedRoute>
         }
       />
+
+      {/* View Events → both roles can see */} 
     
 <Route 
 path="/events"
 element={
-  <ProtectedRoute>
+  <ProtectedRoute allowedRoles={['editor','master']}>
     <Events/>
   </ProtectedRoute>
 }
 />
 
+{/* Event Registrations → only editor */}
+
 <Route
 path="/event-registrations"
 element={
-  <ProtectedRoute>
+  <ProtectedRoute allowedRoles={['editor']}>
     <EventRegistrations/>
   </ProtectedRoute>
 }
 />
 
+  {/* Members → only editor */}
 <Route
 path='/members'
 element={
-  <ProtectedRoute>
+  <ProtectedRoute allowedRoles={['editor']}>
     <Members/>
   </ProtectedRoute>
 }
 />
+
+    {/* Membership Approval → only editor */}
       <Route 
       path='/membership'
       element={
-        <ProtectedRoute>
+        <ProtectedRoute allowedRoles={['editor']}>
           <MembershipApproval/>
         </ProtectedRoute>
       }
       />
 
+  {/* Notifications → both roles */}
       <Route
       path='/sendnotification'
       element={
-        <ProtectedRoute>
+        <ProtectedRoute allowedRoles={['editor','master']}>
           <Notification/>
         </ProtectedRoute>
       }
       /> 
 
+ {/* Event Management → both roles */}
       <Route
       path="/event-management"
       element={
-        <ProtectedRoute>
+        <ProtectedRoute allowedRoles={['editor','master']}>
           <EventManagement/>
         </ProtectedRoute>
       }
@@ -103,19 +115,29 @@ element={
       <Route
       path="/event-management/:eventId"
       element={
-        <ProtectedRoute>
+        <ProtectedRoute allowedRoles={['editor','master']}>
           <EventDetails/>
         </ProtectedRoute>
       }
       />
 
+ {/* Certificate Generator → only editor */}
       <Route
       path="/certificate-generator"
       element={
-       <ProtectedRoute>
+       <ProtectedRoute allowedRoles={['editor']}>
        <CertificateGenerator/>
        </ProtectedRoute>
 
+      }
+      />
+
+      <Route
+      path='/admin-management'
+      element={
+        <ProtectedRoute allowedRoles={['master']}>
+          <AdminManagement/>
+        </ProtectedRoute>
       }
       />
 

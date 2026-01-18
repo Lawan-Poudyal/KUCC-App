@@ -20,6 +20,32 @@ const Dashboard = () => {
     const [recentEvents,setRecentEvents]= useState([]);
     const [loadingEvents, setLoadingEvents]= useState(true);
 
+    // store current admin
+    const [admin,setAdmin]=useState(null);
+
+    // fetch current admin role and user
+    useEffect(()=>{
+        const fetchAdmin=async () => {
+            const {data: sessionData}=await supabase.auth.getSession();
+            if(!sessionData.session) return;
+
+            const {data:adminData, error}=await supabase
+            .from('admins')
+            .select('id,email,role,is_active')
+            .eq('id',sessionData.session.user.id)
+            .single();
+
+            if(!error && adminData?.is_active){
+                setAdmin(adminData);
+            }else{
+               setAdmin(null);
+            }
+
+            
+        };
+        fetchAdmin();
+    },[]);
+
     // fetch all stats
     useEffect(()=>{
         const fetchStats=async () => {
@@ -109,7 +135,7 @@ const Dashboard = () => {
         <AdminLayout>
                 {/* Dashboard Header */}
             <div className="mb-6">
-                <h2 className="text-xl font-bold">Welcome back, Admin</h2>
+                <h2 className="text-xl font-bold">Welcome back, {admin?.role === 'master'? 'Master Admin' : 'Editor Admin'}</h2>
             </div>
 
             {/* Stats */}
@@ -219,6 +245,25 @@ const Dashboard = () => {
                     <div className="bg-orange-400 h-2 rounded-full w-2/3"></div>
                 </div>
             </div>
+
+            {/* 🔹 MASTER ADMIN SECTION 
+
+            {admin?.role === 'master' && (
+                <div className="bg-white p-5 rounded-xl shadow mt-6">
+                    <h3 className="font-semibold mb-3 text-red-600">Admin Management (Master Only)</h3>
+
+                    {/* Placeholder for Master Admin component 
+                    <button
+                        className="px-4 py-2 bg-red-600 text-white rounded-xl hover:opacity-90"
+                        onClick={() => navigate('/admin-management')} // optional route 
+                    >
+                        Manage Admins
+                    </button>
+                </div>
+            )}
+
+            */}
+            
         </AdminLayout>
     );
 };

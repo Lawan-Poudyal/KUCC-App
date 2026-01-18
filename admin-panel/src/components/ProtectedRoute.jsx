@@ -1,51 +1,59 @@
-import { useEffect, useState } from 'react'
-import { Navigate } from 'react-router-dom'
-import { supabase } from '../services/supabaseClient'
+import { useEffect, useState } from 'react';
+import { Navigate } from 'react-router-dom';
+import { supabase } from '../services/supabaseClient';
 
-function ProtectedRoute({ children }) {
-    const [loading, setLoading] = useState(true)
-    const [isAdmin,setIsAdmin]=useState(false)
+function ProtectedRoute({ children, allowedRoles = [] }) {
+  const [loading, setLoading] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
 
-    useEffect(()=>{
-        const checkAdmin=async()=>{
-            //1 .Get session to cheeck login
-            const {data: sessionData}=await supabase.auth.getSession()
+  useEffect(() => {
+    const checkAuth = async () => {
+        try{
+             // Get current Supabase session
+      const { data } = await supabase.auth.getSession();
 
-            if(!sessionData.session){
-                setLoading(false)
-                return
-            }
+      if (!data.session) {
+        setAuthorized(false);
+        setLoading(false);
+        return;
+      }
 
-            //2 .Check admin table to verify admin
-            const {data:adminData,error}=await supabase
-            .from('admins')
-            .select('id, is_active')
-            .eq('id', sessionData.session.user.id)
-            .single()
+       const userId = data.session.user.id;
 
-            if(!error && adminData?.is_active){
-                setIsAdmin(true)
-            }else{
-                // If not admin -> logout
-                await supabase.auth.signOut()
-            }
-            setLoading(false)
+        // Fetch admin role from Supabase
+        const { data: adminData, error } = await supabase
+          .from('admins')
+          .select('role, is_active')
+          .eq('id', userId)
+          .single();
+
+           if (error || !adminData || !adminData.is_active) {
+          setAuthorized(false);
+          setLoading(false);
+          return;
         }
-        checkAdmin()
-    },[])
 
-    if(loading){
-        return  <p>Checking admin access...</p>
-    }
-    if(!isAdmin){
-        return <Navigate to='/login' replace/>
-    }
-    return children
+           // Check if admin role is allowed
+      if (allowedRoles.length && !allowedRoles.includes(adminData.role)) {
+        setAuthorized(false);
+      } else {
+        setAuthorized(true);
+      }
+    }catch (err) {
+        console.error('ProtectedRoute auth check failed:', err);
+        setAuthorized(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [allowedRoles]);
+
+  if (loading) return <p className="text-center mt-10">Checking access...</p>;
+  if (!authorized) return <Navigate to="/login" replace />;
+
+  return children;
 }
 
-export default ProtectedRoute
-
-{/*“Authentication verifies user identity,
- while authorization ensures role-based access using
-  a protected route that validates admin privileges 
-  from the database.” */}
+export default ProtectedRoute;
