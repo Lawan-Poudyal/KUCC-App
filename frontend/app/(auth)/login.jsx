@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
+
 import {
   Alert,
   Dimensions,
@@ -15,7 +16,10 @@ import {
   View,
 } from "react-native";
 import * as Animatable from "react-native-animatable";
+import { supabase } from "../../lib/supabase";
 import { loginWithPassword } from "../../services/auth";
+import { signInWithGoogle } from "../../services/googleAuth";
+
 
 
 
@@ -31,22 +35,64 @@ export default function LoginScreen() {
 const [showPassword, setShowPassword] = useState(false);
 const [focusedInput, setFocusedInput] = useState(null);
 
+//useEffect(() => {
+  //const { data: listener } =
+    //supabase.auth.onAuthStateChange((event, session) => {
+      //console.log("AUTH EVENT:", event);
+
+     // if (session) {
+     //   router.replace("/(tabs)");
+     // }
+   // });
+
+ // return () => listener.subscription.unsubscribe();
+//}, []);
+
+
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
       Alert.alert("Missing Information", "Please enter both email and password.");
       return;
     }
 
-    try {
-      await loginWithPassword(email, password);
-      router.replace("/(tabs)");
-    } catch (err) {
-      Alert.alert("Login Failed", err.message);
-    }
-  };
+      try {
+    await loginWithPassword(email, password);
+    router.replace("/(tabs)");
+  } catch (err) {
+    Alert.alert("Login Failed", err.message);
+  }
+};
+ const handleGoogleLogin = async () => {
+  try {
+    await signInWithGoogle();
+  } catch (err) {
+    Alert.alert("Google Login Failed", err.message);
+  }
+};
 
-  const handleForgotPassword = () =>
-    router.push({ pathname: "/(auth)/otp", params: { email } });
+
+
+const handleForgotPassword = async () => {
+  if (!email.trim()) {
+    Alert.alert("Email required", "Please enter your email first");
+    return;
+  }
+
+  try {
+   await supabase.auth.resetPasswordForEmail(email, {
+  redirectTo: redirectUrl,
+});
+
+
+    router.push({
+      pathname: "/(auth)/email-sent",
+      params: { email },
+    });
+  } catch (err) {
+    Alert.alert("Error", err.message);
+  }
+};
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -168,7 +214,8 @@ const [focusedInput, setFocusedInput] = useState(null);
                 </View>
 
                 {/* GOOGLE */}
-                <TouchableOpacity style={styles.googleBtn}>
+                <TouchableOpacity style={styles.googleBtn} onPress={handleGoogleLogin}>
+
                   <Image
                     source={{
                       uri: "https://developers.google.com/identity/images/g-logo.png",

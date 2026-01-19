@@ -2,17 +2,25 @@
   "expo": {
     "name": "KUCC-App",
     "slug": "KUCC-App",
+    "owner": "kreetee2006",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/kucc-logo.png",
     "scheme": "kuccapp",
-    
+    "platforms": ["ios", "android"],
+
     "android": {
+      "package": "com.kreetee.kuccapp",
       "adaptiveIcon": {
         "foregroundImage": "./assets/kucc-logo.png",
         "backgroundColor": "#E6F4FE"
       }
     },
+
+    "ios": {
+      "bundleIdentifier": "com.kreetee.kuccapp"
+    },
+
     "plugins": [
       "expo-router",
       [
@@ -24,6 +32,7 @@
         }
       ],
       "expo-web-browser"
+      
     ]
   }
 }

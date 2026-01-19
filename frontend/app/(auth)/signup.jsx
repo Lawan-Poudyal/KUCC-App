@@ -16,6 +16,8 @@ import {
 } from "react-native";
 import * as Animatable from "react-native-animatable";
 import { signUpWithPassword } from "../../services/auth";
+import { signInWithGoogle } from "../../services/googleAuth";
+
 
 
 const { width, height } = Dimensions.get("window");
@@ -30,20 +32,33 @@ export default function SignUpScreen() {
 const [focusedInput, setFocusedInput] = useState(null);
 
 
- const handleSignUp = async () => {
-    if (!name || !phone || !email || !password) {
-      Alert.alert("Missing Information", "Please fill all fields.");
-      return;
-    }
+const handleSignUp = async () => {
+  if (!name || !phone || !email || !password) {
+    Alert.alert("Missing Information", "Please fill all fields.");
+    return;
+  }
 
   try {
-   await signUpWithPassword(email, password, name, phone);
+
+ await signUpWithPassword(email, password, name, phone);
+
     Alert.alert("Success", "Account created successfully");
     router.replace("/(auth)/login");
   } catch (err) {
     Alert.alert("Signup failed", err.message);
   }
 };
+
+const handleGoogleSignup = async () => {
+  try {
+    const session = await signInWithGoogle();
+    console.log("Logged in!", session);
+     //router.replace("/(auth)/home"); // redirect after successful login
+  } catch (err) {
+    Alert.alert("Google Signup Failed", err.message);
+  }
+};
+
 
   const handleLogin = () => {
     router.replace("/(auth)/login");
@@ -177,7 +192,8 @@ const [focusedInput, setFocusedInput] = useState(null);
           </View>
 
           {/* GOOGLE */}
-          <TouchableOpacity style={styles.googleBtn}>
+        <TouchableOpacity  style={styles.googleBtn} onPress={handleGoogleSignup}>
+
             <Image
               source={{
                 uri: "https://developers.google.com/identity/images/g-logo.png",
