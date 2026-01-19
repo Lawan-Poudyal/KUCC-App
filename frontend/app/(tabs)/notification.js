@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -8,53 +8,31 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
-const notifications = {
-  today: [
-    {
-      title: "Registration open for Tech Talk 2025!",
-      description:
-        "Registration for Tech Talk 2025 is now open! Seats are limited. Make sure to register before Dec 5, 2025.",
-      time: "2 hr",
-    },
-    {
-      title: "Club meeting today at 3 PM.",
-      description: "This is a reminder for today's club meeting at 3:00 PM.",
-      time: "5 hr",
-    },
-    {
-      title: "New volunteering opportunity available.",
-      description:
-        "Our club is partnering with KU Welfare Cell for a volunteering initiative.",
-      time: "18 hr",
-    },
-  ],
-  weekly: [
-    {
-      title: "Your event payment is confirmed.",
-      description: "We've received your payment for Hackfest 2025.",
-      time: "3d",
-    },
-    {
-      title: "Your club membership has been approved.",
-      description:
-        "Congratulations! Your membership request for KUCC has been approved.",
-      time: "5d",
-    },
-  ],
-};
+import { getNotifications } from "../../services/notificationService";
+import { groupNotifications } from "../../utils/notificationUtils";
 
 export default function NotificationScreen() {
+ const [notifications, setNotifications] = useState([]);
   const [selectedNotification, setSelectedNotification] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  function openNotification(item) {
-    setLoading(true);
-
-    setTimeout(() => {
-      setSelectedNotification(item);
+useEffect(() => {
+  async function load() {
+    try {
+      const data = await getNotifications();
+      setNotifications(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
       setLoading(false);
-    }, 2000); // simulate loading
+    }
+  }
+
+  load();
+}, []);
+ const grouped = groupNotifications(notifications);
+ function openNotification(item) {
+    setSelectedNotification(item);
   }
 
   function goBack() {
@@ -91,12 +69,12 @@ export default function NotificationScreen() {
         <Text style={styles.detailTitle}>
           {selectedNotification.title}
         </Text>
-        <Text style={styles.detailTime}>
-          {selectedNotification.time}
+       <Text style={styles.detailTime}>
+          {new Date(selectedNotification.created_at).toLocaleString()}
         </Text>
-
+        
         <Text style={styles.detailDesc}>
-          {selectedNotification.description}
+          {selectedNotification.message}
         </Text>
       </View>
     );
@@ -122,10 +100,14 @@ export default function NotificationScreen() {
       >
         {/* Today */}
         <Text style={styles.sectionTitle}>Today</Text>
-        {notifications.today.map((item, index) => (
+       {grouped.today.map((item) => (
           <NotificationCard
-            key={index}
-            item={item}
+            key={item.id}
+            item={{
+              title: item.title,
+              description: item.message,
+              time: new Date(item.created_at).toLocaleTimeString(),
+            }}
             onPress={() => openNotification(item)}
           />
         ))}
@@ -134,10 +116,14 @@ export default function NotificationScreen() {
         <Text style={[styles.sectionTitle, { marginTop: 25 }]}>
           Earlier this week
         </Text>
-        {notifications.weekly.map((item, index) => (
+          {grouped.weekly.map((item) => (
           <NotificationCard
-            key={index}
-            item={item}
+            key={item.id}
+            item={{
+              title: item.title,
+              description: item.message,
+              time: new Date(item.created_at).toLocaleDateString(),
+            }}
             onPress={() => openNotification(item)}
           />
         ))}
