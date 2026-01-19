@@ -17,7 +17,7 @@ try {
     const{data: userData, error: userError}= 
     await supabase.auth.getUser(token);
 
-    if(userError || !userData.user){
+    if(userError || !userData?.user){
         return res.status(401).json({error:'Invalid token'});
     }
 
@@ -38,8 +38,13 @@ try {
     if(roles.length && !roles.includes(adminData.role)){
         return res.status(403).json({error:'Insufficient privileges'});
     }
+
+    // attach to request
     req.admin=adminData;
     console.log('Admin authenticated:', adminData);
+    
+    req.userId=userId;  // for notification
+    
     next();
 } catch (err) {
     console.error('Error in requireAdmin middleware:', err);
