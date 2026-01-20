@@ -39,7 +39,7 @@ useEffect(() => {
     setSelectedNotification(null);
   }
 
-  /* ---------------- FULL SCREEN LOADER ---------------- */
+  /*  FULL SCREEN LOADER  */
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
@@ -51,7 +51,7 @@ useEffect(() => {
     );
   }
 
-  /* ---------------- DETAIL VIEW ---------------- */
+  /*  DETAIL VIEW*/
   if (selectedNotification) {
     return (
       <View style={styles.detailContainer}>
@@ -80,7 +80,7 @@ useEffect(() => {
     );
   }
 
-  /* ---------------- MAIN LIST (UNCHANGED STRUCTURE) ---------------- */
+  /*  MAIN LIST  */
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -132,7 +132,7 @@ useEffect(() => {
   );
 }
 
-/* ---------------- CARD (UNCHANGED + onPress) ---------------- */
+/*CARD */
 function NotificationCard({ item, onPress }) {
   return (
     <TouchableOpacity activeOpacity={0.8} onPress={onPress}>
@@ -147,7 +147,7 @@ function NotificationCard({ item, onPress }) {
   );
 }
 
-/* ---------------- STYLES (ORIGINAL + ADDED) ---------------- */
+/*  STYLES */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
