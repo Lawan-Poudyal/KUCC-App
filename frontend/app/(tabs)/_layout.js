@@ -11,6 +11,10 @@ export default function TabLayout() {
       <Tabs.Screen name="about" />
       <Tabs.Screen name="notification" />
       <Tabs.Screen name="profile" />
+      <Tabs.Screen
+        name="(events)"
+        options={{ href: null }} // hides from tab bar
+      />
     </Tabs>
   );
 }
