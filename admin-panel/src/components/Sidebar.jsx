@@ -65,6 +65,7 @@ const Sidebar = () => {
     const navItems = [
         { name: 'Dashboard', path: '/dashboard' },
         { name: 'Events', path: '/event-management' },
+        { name: 'Event Applications', path: '/event-applications', role: 'editor' },
         { name: 'Certificates', path: '/certificate-generator',role: 'editor' },
         { name: 'Notifications', path: '/sendnotification' },
         { name: 'Approvals', path: '/membership', role: 'editor'},
@@ -94,6 +95,8 @@ const Sidebar = () => {
       {/* Navigation */}
               <nav className="space-y-3">
                 {navItems.map((item) => {
+
+                    // Hide items that are role-specific and don't match current role
                     if (item.role && item.role !== role) return null;
 
                     const isActive = location.pathname === item.path;

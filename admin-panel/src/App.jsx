@@ -10,9 +10,12 @@ import Events from './pages/Events';
 import EventRegistrations from './pages/EventRegistrations';
 import Members from './pages/Members';
 import EventManagement from './pages/EventManagement';
-import EventDetails from './pages/EventDetails';
+import EventDetails from './pages/EnhancedEventDetails';
 import CertificateGenerator from './pages/CertificateGenerator';
 import AdminManagement from './components/AdminManagement';
+
+import  EventApplications from './pages/EventApplications';
+import EnhancedEventDetails from './pages/EnhancedEventDetails';
 
 
 function App() {
@@ -112,14 +115,26 @@ element={
       }
       />
 
+       {/* Event Details → UPDATED to use EnhancedEventDetails with payment tab */}
+
       <Route
       path="/event-management/:eventId"
       element={
         <ProtectedRoute allowedRoles={['editor','master']}>
-          <EventDetails/>
+          <EnhancedEventDetails/>
         </ProtectedRoute>
       }
       />
+
+       {/* NEW ROUTE - Event Applications & Payments → only editor */}
+       <Route
+       path='/event-applications'
+       element={
+        <ProtectedRoute allowedRoles={['editor']}>
+          <EventApplications/>
+        </ProtectedRoute>
+       }
+       />
 
  {/* Certificate Generator → only editor */}
       <Route
@@ -132,6 +147,7 @@ element={
       }
       />
 
+ {/* Admin Management → only master */}
       <Route
       path='/admin-management'
       element={
@@ -140,8 +156,6 @@ element={
         </ProtectedRoute>
       }
       />
-
-     
 
 
     </Routes>

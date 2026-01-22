@@ -1,14 +1,12 @@
 import React from "react";
+const RecipientSelection = ({formData, setFormData,onNext,onBack,recipients = [] }) => {
 
-
-const RecipientSelection = ({formData, setFormData,onNext,onBack }) => {
-
-  const recipients = [
+ {/* const recipients = [
     { id: 1, name: "Tilashmi Dahal", email: "tilashmi@ku.edu.np" },
     { id: 2, name: "Ayush Paudel", email: "ayush@ku.edu.np" },
     { id: 3, name: "Lawan Paudel", email: "lawan@ku.edu.np" },
     { id: 4, name: "Kretee Shakya", email: "kretee@ku.edu.np" },
-  ];
+  ]; */}
  
 const selectedRecipients= formData.selectedRecipients || [];
 
@@ -109,9 +107,12 @@ const selectedRecipients= formData.selectedRecipients || [];
 
           {/*Recipients List */}
           <div className="space-y-4 mb-6">
-            {recipients.map((recipient) => {
-              const isSelected= selectedRecipients.includes(recipient.id);
 
+            {recipients.length === 0 ? (
+               <p className="text-gray-600 text-center">No recipients found for this event.</p>
+            ):(
+            recipients.map((recipient) => {
+              const isSelected= selectedRecipients.includes(recipient.id);
               return(
                 <div
                 key={recipient.id}
@@ -139,7 +140,8 @@ const selectedRecipients= formData.selectedRecipients || [];
                   </div>
                 </div>
               );          
-})}
+             })
+            )}
           </div>
 
           {/* Selected Count */}

@@ -172,25 +172,39 @@ const Dashboard = () => {
             <h3 className="font-semibold mb-3">Quick Actions</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
 
-                <div onClick={() => navigate('/create-event')}>
+                {admin?.role === 'editor' && (
+                    <div onClick={() => navigate('/create-event')}>
                     <ActionCard title="Create Event" subtitle="Add New Event" />
                 </div>
+                )}
 
-                <div onClick={()=> navigate('/membership')}>
+                {admin?.role === 'editor' && (
+                    <div onClick={()=> navigate('/membership')}>
                 <ActionCard title="Approvals" subtitle="Check pending" />
                 </div>
+                )}
 
                 <div onClick={()=> navigate('/sendnotification')}>
                 <ActionCard title="Send Notification" subtitle="Broadcast Message" />
                 </div>
+                
 
-                <div onClick={()=>navigate('/members')}>
+              {admin?.role === 'editor' && (
+                  <div onClick={()=>navigate('/members')}>
                 <ActionCard title="Members" subtitle="View Directory" />
                 </div>
+              )}
+
+              {admin?.role === 'editor' && (
+                    <div onClick={() => navigate('/event-applications')}>
+                        <ActionCard title="Event Applications" subtitle="Manage Payments" />
+                    </div>
+                )}
             </div>
 
              {/* Event Registrations Button */}
-             <div className='mb-6'>
+             {admin?.role === 'editor' && (
+                <div className='mb-6'>
                 <button 
                 onClick={()=> navigate("/event-registrations")}
                 className='px-4 py-2 bg-[#585F8A] text-white rounded-xl hover:opacity-90 transition'
@@ -198,6 +212,7 @@ const Dashboard = () => {
                     Event Registrations
                 </button>
              </div>
+             )}
 
 
    {/* Recent Events */}
