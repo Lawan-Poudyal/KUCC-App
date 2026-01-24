@@ -1,34 +1,49 @@
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
   Dimensions,
+  Image,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import * as Animatable from "react-native-animatable";
+import { signUpWithPassword } from "../../services/auth";
+
 
 const { width, height } = Dimensions.get("window");
+const logoSize = 100;
 
 export default function SignUpScreen() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+const [focusedInput, setFocusedInput] = useState(null);
 
-  const handleSignUp = () => {
-    if (!name.trim() || !phone.trim() || !email.trim() || !password.trim()) {
-      Alert.alert("Missing Information", "Please fill out all fields.");
+
+ const handleSignUp = async () => {
+    if (!name || !phone || !email || !password) {
+      Alert.alert("Missing Information", "Please fill all fields.");
       return;
     }
-    router.replace("/(tabs)");
-  };
+
+  try {
+   await signUpWithPassword(email, password, name, phone);
+    Alert.alert("Success", "Account created successfully");
+    router.replace("/(auth)/login");
+  } catch (err) {
+    Alert.alert("Signup failed", err.message);
+  }
+};
 
   const handleLogin = () => {
     router.replace("/(auth)/login");
@@ -37,77 +52,154 @@ export default function SignUpScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* HEADER */}
-          <View style={styles.header}>
-            <Text style={styles.headerText}>Hello</Text>
-            <Text style={styles.headerText}>Create your</Text>
-            <Text style={styles.headerText}>account !</Text>
+        {/* ===== TOP ===== */}
+        <View>
+          <View style={styles.welcomeCard}>
+            <Text style={styles.welcomeText}>Hello</Text>
+            <Text style={styles.welcomeText}>Create your account!</Text>
           </View>
 
-          {/* CARD */}
-          <View style={styles.cardWrapper}>
-            <View style={styles.card}>
-              <View style={styles.form}>
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Name</Text>
-                  <TextInput style={styles.input} value={name} onChangeText={setName} />
-                </View>
+          <Animatable.View
+            animation="fadeInDown"
+            duration={900}
+            style={styles.logoWrapper}
+          >
+            <Image
+              source={{
+                uri: "https://www.bing.com/th/id/OIP.-MHxVaRWUStiVS8nNk_tuAHaGB",
+              }}
+              style={{ width: logoSize, height: logoSize }}
+              resizeMode="contain"
+            />
+          </Animatable.View>
+        </View>
 
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Phone</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={phone}
-                    onChangeText={setPhone}
-                    keyboardType="phone-pad"
-                  />
-                </View>
-
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Gmail</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={email}
-                    onChangeText={setEmail}
-                    placeholder="yourname@gmail.com"
-                    placeholderTextColor="#A7A7B7"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                  />
-                </View>
-
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Password</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                  />
-                </View>
-
-                <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
-                  <Text style={styles.signUpButtonText}>SIGN UP</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+        {/* ===== FORM ===== */}
+        <View style={styles.middle}>
+          {/* NAME */}
+          <View
+            style={[
+              styles.inputBox,
+              focusedInput === "name" && styles.inputFocused,
+            ]}
+          >
+            <Ionicons name="person-outline" size={18} color="#383F78" />
+            <TextInput
+              style={styles.textInput}
+              placeholder="Name"
+              value={name}
+              onChangeText={setName}
+              onFocus={() => setFocusedInput("name")}
+              onBlur={() => setFocusedInput(null)}
+            />
           </View>
 
-          {/* FOOTER */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Already have an account?</Text>
-            <TouchableOpacity onPress={handleLogin}>
-              <Text style={styles.loginText}>Login here</Text>
+          {/* PHONE */}
+          <View
+            style={[
+              styles.inputBox,
+              focusedInput === "phone" && styles.inputFocused,
+            ]}
+          >
+            <Ionicons name="call-outline" size={18} color="#383F78" />
+            <TextInput
+              style={styles.textInput}
+              placeholder="Phone"
+              keyboardType="phone-pad"
+              value={phone}
+              onChangeText={setPhone}
+              onFocus={() => setFocusedInput("phone")}
+              onBlur={() => setFocusedInput(null)}
+            />
+          </View>
+
+          {/* EMAIL */}
+          <View
+            style={[
+              styles.inputBox,
+              focusedInput === "email" && styles.inputFocused,
+            ]}
+          >
+            <Ionicons name="mail-outline" size={18} color="#383F78" />
+            <TextInput
+              style={styles.textInput}
+              placeholder="Email"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              value={email}
+              onChangeText={setEmail}
+              onFocus={() => setFocusedInput("email")}
+              onBlur={() => setFocusedInput(null)}
+            />
+          </View>
+
+          {/* PASSWORD */}
+          <View
+            style={[
+              styles.inputBox,
+              focusedInput === "password" && styles.inputFocused,
+            ]}
+          >
+            <Ionicons name="lock-closed-outline" size={18} color="#383F78" />
+            <TextInput
+              style={styles.textInput}
+              placeholder="Password"
+              secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={setPassword}
+              onFocus={() => setFocusedInput("password")}
+              onBlur={() => setFocusedInput(null)}
+            />
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              <Ionicons
+                name={showPassword ? "eye-outline" : "eye-off-outline"}
+                size={18}
+                color="#999"
+              />
             </TouchableOpacity>
           </View>
-        </ScrollView>
+
+          {/* SIGNUP BUTTON */}
+          <TouchableOpacity style={styles.button} onPress={handleSignUp}>
+            <Text style={styles.buttonText}>SIGN UP</Text>
+          </TouchableOpacity>
+
+          {/* OR */}
+          <View style={styles.orRow}>
+            <View style={styles.line} />
+            <Text style={styles.orText}>OR</Text>
+            <View style={styles.line} />
+          </View>
+
+          {/* GOOGLE */}
+          <TouchableOpacity style={styles.googleBtn}>
+            <Image
+              source={{
+                uri: "https://developers.google.com/identity/images/g-logo.png",
+              }}
+              style={{ width: 20, height: 20, marginRight: 10 }}
+            />
+            <Text style={styles.googleText}>Sign up with Google</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* ===== FOOTER ===== */}
+        <View style={styles.footerBox}>
+         
+            <Text style={styles.footerTitle}>Already have an account?</Text>
+        
+          
+          <TouchableOpacity onPress={() => router.replace("/(auth)/login")}>
+                    <Text style={styles.footerSubtitle}>
+                     login here
+                    </Text>
+                    </TouchableOpacity>
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -116,95 +208,121 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#383F78",
-  },
- scrollContent: {
-  flexGrow: 1,
-  paddingTop: height * 0.06,
-  paddingBottom: height * 0.03,
-},
-
-  /* HEADER */
-  header: {
-    paddingHorizontal: width * 0.08,
-    marginBottom: height * 0.05,
-  },
-  headerText: {
-    fontSize: width * 0.09,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    lineHeight: width * 0.11,
+    backgroundColor: "#FFFFFF",
   },
 
-  /* CARD */
- cardWrapper: {
-  alignItems: "center",
-  marginTop: height * 0.008,   
-},
-
-card: {
-  width: width * 0.92,
-  backgroundColor: "#F6F6F6",
-  borderRadius: 42,
-  transform: [{ rotate: "-9deg" }], 
-  paddingVertical: height * 0.03,
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 5 },
-  shadowOpacity: 0.16,
-  shadowRadius: 10,
-  elevation: 8,
-},
-
-form: {
-  transform: [{ rotate: "9deg" }],
-  paddingHorizontal: width * 0.085,
-  paddingTop: height * 0.015,
-},
-
-  inputGroup: {
-    marginBottom: height * 0.02,
-  },
-  label: {
-    fontSize: width * 0.038,
-    color: "#383F78",
-    marginBottom: 6,
-  },
-  input: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#CFCFDB",
-    paddingVertical: 8,
-    fontSize: width * 0.04,
-    color: "#333",
-  },
-
-  signUpButton: {
-    marginTop: height * 0.015,
+  welcomeCard: {
     backgroundColor: "#5B5F8D",
-    borderRadius: 28,
-    paddingVertical: height * 0.018,
-    alignItems: "center",
-  },
-  signUpButtonText: {
-    color: "#FFF",
-    fontSize: width * 0.04,
-    fontWeight: "700",
-    letterSpacing: 1.2,
+    paddingVertical: 40,
+    paddingHorizontal: 26,
+    borderRadius: 24,
   },
 
-  /* FOOTER */
-  footer: {
-  alignItems: "center",
-  marginTop: height * 0.035, 
-},
-  footerText: {
-    color: "#FFF",
-    fontSize: width * 0.037,
-  },
-  loginText: {
-    color: "#FFF",
-    fontSize: width * 0.037,
+  welcomeText: {
+    color: "#FFFFFF",
+    fontSize: 26,
     fontWeight: "700",
-    marginTop: 4,
-    textDecorationLine: "underline",
+  },
+
+  logoWrapper: {
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
+  middle: {
+    flex: 1,
+    paddingHorizontal: 30,
+    justifyContent: "center",
+    transform: [{ translateY: -32 }],
+  },
+
+  inputBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 30,
+    paddingHorizontal: 18,
+    height: 48,
+    marginTop: 12,
+    borderWidth: 1.2,
+    borderColor: "#DADAEA",
+  },
+
+  inputFocused: {
+    borderColor: "#5B5F8D",
+  },
+
+  textInput: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 14,
+  },
+
+  button: {
+    backgroundColor: "#5B5F8D",
+    paddingVertical: 12,
+    borderRadius: 30,
+    alignItems: "center",
+    marginTop: 26,
+    width: 160,
+    alignSelf: "center",
+  },
+
+  buttonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    letterSpacing: 1,
+  },
+
+  orRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 20,
+  },
+
+  line: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#ccc",
+  },
+
+  orText: {
+    marginHorizontal: 10,
+    color: "#999",
+  },
+
+  googleBtn: {
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 3,
+  },
+
+  googleText: {
+    fontWeight: "600",
+  },
+
+ 
+  footerBox: {
+  backgroundColor: "#5B5F8D",
+  borderTopLeftRadius: 24,
+  borderTopRightRadius: 24,
+  paddingVertical: 35,
+  alignItems: "center",
+},
+footerSubtitle: {
+  color: "#FFFFFF",
+  fontSize: 12,
+  marginBottom: 14,
+     textDecorationLine: "underline",
+},
+
+  footerTitle: {
+    color: "#FFFFFF",
+    fontSize: 13,
+   
   },
 });
