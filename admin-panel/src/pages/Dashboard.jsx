@@ -20,6 +20,32 @@ const Dashboard = () => {
     const [recentEvents,setRecentEvents]= useState([]);
     const [loadingEvents, setLoadingEvents]= useState(true);
 
+    // store current admin
+    const [admin,setAdmin]=useState(null);
+
+    // fetch current admin role and user
+    useEffect(()=>{
+        const fetchAdmin=async () => {
+            const {data: sessionData}=await supabase.auth.getSession();
+            if(!sessionData.session) return;
+
+            const {data:adminData, error}=await supabase
+            .from('admins')
+            .select('id,email,role,is_active')
+            .eq('id',sessionData.session.user.id)
+            .single();
+
+            if(!error && adminData?.is_active){
+                setAdmin(adminData);
+            }else{
+               setAdmin(null);
+            }
+
+            
+        };
+        fetchAdmin();
+    },[]);
+
     // fetch all stats
     useEffect(()=>{
         const fetchStats=async () => {
@@ -109,7 +135,7 @@ const Dashboard = () => {
         <AdminLayout>
                 {/* Dashboard Header */}
             <div className="mb-6">
-                <h2 className="text-xl font-bold">Welcome back, Admin</h2>
+                <h2 className="text-xl font-bold">Welcome back, {admin?.role === 'master'? 'Master Admin' : 'Editor Admin'}</h2>
             </div>
 
             {/* Stats */}
@@ -146,25 +172,39 @@ const Dashboard = () => {
             <h3 className="font-semibold mb-3">Quick Actions</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
 
-                <div onClick={() => navigate('/create-event')}>
+                {admin?.role === 'editor' && (
+                    <div onClick={() => navigate('/create-event')}>
                     <ActionCard title="Create Event" subtitle="Add New Event" />
                 </div>
+                )}
 
-                <div onClick={()=> navigate('/membership')}>
+                {admin?.role === 'editor' && (
+                    <div onClick={()=> navigate('/membership')}>
                 <ActionCard title="Approvals" subtitle="Check pending" />
                 </div>
+                )}
 
                 <div onClick={()=> navigate('/sendnotification')}>
                 <ActionCard title="Send Notification" subtitle="Broadcast Message" />
                 </div>
+                
 
-                <div onClick={()=>navigate('/members')}>
+              {admin?.role === 'editor' && (
+                  <div onClick={()=>navigate('/members')}>
                 <ActionCard title="Members" subtitle="View Directory" />
                 </div>
+              )}
+
+              {admin?.role === 'editor' && (
+                    <div onClick={() => navigate('/event-applications')}>
+                        <ActionCard title="Event Applications" subtitle="Manage Payments" />
+                    </div>
+                )}
             </div>
 
              {/* Event Registrations Button */}
-             <div className='mb-6'>
+             {admin?.role === 'editor' && (
+                <div className='mb-6'>
                 <button 
                 onClick={()=> navigate("/event-registrations")}
                 className='px-4 py-2 bg-[#585F8A] text-white rounded-xl hover:opacity-90 transition'
@@ -172,6 +212,7 @@ const Dashboard = () => {
                     Event Registrations
                 </button>
              </div>
+             )}
 
 
    {/* Recent Events */}
@@ -219,6 +260,25 @@ const Dashboard = () => {
                     <div className="bg-orange-400 h-2 rounded-full w-2/3"></div>
                 </div>
             </div>
+
+            {/* 🔹 MASTER ADMIN SECTION 
+
+            {admin?.role === 'master' && (
+                <div className="bg-white p-5 rounded-xl shadow mt-6">
+                    <h3 className="font-semibold mb-3 text-red-600">Admin Management (Master Only)</h3>
+
+                    {/* Placeholder for Master Admin component 
+                    <button
+                        className="px-4 py-2 bg-red-600 text-white rounded-xl hover:opacity-90"
+                        onClick={() => navigate('/admin-management')} // optional route 
+                    >
+                        Manage Admins
+                    </button>
+                </div>
+            )}
+
+            */}
+            
         </AdminLayout>
     );
 };

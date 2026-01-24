@@ -14,6 +14,16 @@ const ReviewStep = ({onBack,onNext,formData}) => {
     const eventName=formData.selectedEvent?.name || 'No Event Selected';
     const certificateType= formData.certificateType?.name || 'No Type Selected';
     const recipients= formData.selectedRecipients || [];
+
+    // Map recipient IDs or objects to names
+  const recipientNames = recipients
+    .map((r) => {
+      if (typeof r === 'number') return allRecipients.find(a => a.id === r)?.name;
+      if (typeof r === 'object') return r.name;
+      return null;
+    })
+    .filter(Boolean)
+    .join(', ');
     
    
   return (
@@ -87,11 +97,7 @@ const ReviewStep = ({onBack,onNext,formData}) => {
                             {recipients.length} Member{recipients.length !== 1 ? 's': ''}
                         </h3>
                         <p className='text-base font-bold text-gray-900'>
-                            {recipients
-                            .map((rid)=> allRecipients.find(r => r.id=== rid)?.name)
-                            .filter(Boolean)
-                            .join(', ')
-                            }
+                            {recipientNames || 'No Recipients Selected'}
                         </p>
                     </div>
 
