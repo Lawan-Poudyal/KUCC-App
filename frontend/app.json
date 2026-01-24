@@ -14,7 +14,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/kucc-logo.png",
         "backgroundColor": "#E6F4FE"
-      }
+      },
+      "package": "com.anonymous.KUCCApp"
     },
 
     "ios": {
@@ -30,9 +31,13 @@
           "resizeMode": "contain",
           "backgroundColor": "#E6F4FE"
         }
-      ],
-      "expo-web-browser"
-      
-    ]
+      ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "45e34849-d704-4045-bf5d-a81e94f03429"
+      }
+    }
   }
 }
