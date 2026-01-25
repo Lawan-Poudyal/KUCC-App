@@ -1,11 +1,12 @@
 import React from "react";
 
-const events = [
+{/*const events = [
   { id:1,name: "HackFest 2025", date: "March 15, 2026", participants: 45 },
   { id:2, name: "Web Dev Workshop", date: "March 15, 2026", participants: 50 },
   { id:3, name: "AI/ML Bootcamp", date: "March 15, 2026", participants: 80 },
-];
-const StepEvent = ({formData, setFormData,onNext}) => {
+]; */}
+
+const StepEvent = ({formData, setFormData,onNext,events=[],loading}) => {
   const selectEvent=(event)=>{
     setFormData({...formData, selectedEvent: event});
   };
@@ -32,7 +33,29 @@ const StepEvent = ({formData, setFormData,onNext}) => {
           </div>
         </div>
 
+
+        {/*using react fragment that decrease the code */}
+
         {/* Steps */}
+        <div className="bg-gray-300 px-6 pb-6 flex items-center justify-between">
+          {["Event", "Type", "Recipients", "Review"].map((step, idx) => (
+            <React.Fragment key={idx}>
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${
+                    idx === 0 ? "bg-blue-600 text-white" : "bg-white text-gray-500"
+                  }`}
+                >
+                  {idx + 1}
+                </div>
+                <span className={`text-sm font-semibold ${idx === 0 ? "text-gray-900" : "text-gray-600"}`}>{step}</span>
+              </div>
+              {idx < 3 && <div className="flex-1 h-0.5 bg-gray-400 mx-2"></div>}
+            </React.Fragment>
+          ))}
+        </div>
+
+        {/* 
         <div className="bg-gray-300 px-6 pb-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">1</div>
@@ -57,7 +80,8 @@ const StepEvent = ({formData, setFormData,onNext}) => {
             <span className="text-sm font-medium text-gray-600">Review</span>
           </div>
         </div>
-        {/*Main Content */}
+*/}
+       {/*Main Content */}
         <div className="bg-gray-200 rounded-b-3xl p-8">
           <div className="mb-6">
             <h2 className="text-xl font-bold text-gray-900 mb-2">Step-1: Select Event</h2>
@@ -66,8 +90,11 @@ const StepEvent = ({formData, setFormData,onNext}) => {
             </p>
           </div>
 
-          {/*Event List */}
-          <div className="space-y-4 mb-8">
+          {loading ? (
+             <p className="text-gray-600 text-center mt-8">Loading events...</p>
+          ):(
+            // event list
+             <div className="space-y-4 mb-8">
             {events.map((event) => (
               <div
                 key={event.id}
@@ -82,16 +109,18 @@ const StepEvent = ({formData, setFormData,onNext}) => {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">{event.name}</h3>
-                    <p className="text-sm text-gray-600">Date: {event.date}</p>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">{event.title || event.name}</h3>
+                    <p className="text-sm text-gray-600">Date: {event.event_date || event.date}</p>
                   </div>
                   <div className="bg-gray-200 px-4 py-2 rounded-full">
-                    <span className="text-sm font-medium text-gray-700">{event.participants} participants</span>
+                    <span className="text-sm font-medium text-gray-700">{event.participants || event.registrations_count || 0} participants</span>
                   </div>
                 </div>
               </div>
             ))}
           </div>
+          )
+        }
 
           {/* Navigation buttons */}
           <div className="flex items-center justify-between gap-4">

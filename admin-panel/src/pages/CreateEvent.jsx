@@ -33,7 +33,10 @@ const CreateEvent = () => {
         registrationFee: '',
         eventType: '',
         accessLevel: 'kucc-only',
-        banner: null
+        banner: null,
+        isPaid: false,
+        paymentAmount: '0',
+        paymentMethods:['Cash','Online']
     });
 
     const [errors, setErrors] = useState({});
@@ -49,6 +52,16 @@ const CreateEvent = () => {
         'Tech Talk',
         'Other'
     ];
+
+    const availablePaymentMethods = [
+        'Cash',
+        'Online',
+        'Bank Transfer',
+        'eSewa',
+        'Khalti',
+        'Credit/Debit Card'
+    ];
+
 
     const validateField = (name, value) => {
         switch (name) {
@@ -68,14 +81,28 @@ const CreateEvent = () => {
                 return value === '' || value < 0 ? 'Fee must be 0 or greater' : '';
             case 'eventType':
                 return !value ? 'Please select an event type' : '';
+                case 'paymentAmount':
+                if (formData.isPaid && (!value || parseFloat(value) <= 0)) {
+                    return 'Payment amount must be greater than 0 for paid events';
+                }
+                return '';
             default:
                 return '';
         }
     };
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        const { name, value, type, checked } = e.target;
+       
+        if (name === 'isPaid') {
+            setFormData(prev => ({ 
+                ...prev, 
+                isPaid: checked,
+                paymentAmount: checked ? prev.registrationFee || '0' : '0'
+            }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+        }
 
         if (touched[name]) {
             const error = validateField(name, value);
@@ -89,6 +116,17 @@ const CreateEvent = () => {
         const error = validateField(name, value);
         setErrors(prev => ({ ...prev, [name]: error }));
     };
+
+    const handlePaymentMethodToggle = (method) => {
+        setFormData(prev => ({
+            ...prev,
+            paymentMethods: prev.paymentMethods.includes(method)
+                ? prev.paymentMethods.filter(m => m !== method)
+                : [...prev.paymentMethods, method]
+        }));
+    };
+
+
 
     const handleBannerUpload = (e) => {
         const file = e.target.files[0];
@@ -121,6 +159,11 @@ const CreateEvent = () => {
                 if (error) newErrors[key] = error;
             }
         });
+
+         // Validate payment methods if event is paid
+        if (formData.isPaid && formData.paymentMethods.length === 0) {
+            newErrors.paymentMethods = 'Please select at least one payment method';
+        }
 
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
@@ -157,38 +200,7 @@ const CreateEvent = () => {
             bannerUrl=bannerPreview;
         }
 
-        if(id){
-            // update existing event
-            const {error: updateError}=await supabase
-            .from('events')
-            .update({
-                title: formData.eventName,
-                description: formData.description,
-                event_date: formData.date,
-                event_time:formData.time,
-                location: formData.location,
-                max_participants: Number(formData.maxParticipants),
-                registration_fee:Number(formData.registrationFee),
-                event_type: formData.eventType,
-                access_level: formData.accessLevel,
-                banner_url: bannerUrl || bannerPreview // keep old banner if new not uploaded
-            })
-            .eq('id',id);
-
-            if(updateError) throw updateError;
-
-            setSuccessMessage('Event updated successfully!');
-            setShowSuccess(true);
-            setTimeout(()=>{
-                setShowSuccess(false);
-                navigate('/dashboard');
-            },2000);
-
-        }else{
-            // create new event into database 
-            const {error:insertError}= await supabase
-            .from('events')
-            .insert({
+         const eventData = {
                 title: formData.eventName,
                 description: formData.description,
                 event_date: formData.date,
@@ -198,8 +210,36 @@ const CreateEvent = () => {
                 registration_fee: Number(formData.registrationFee),
                 event_type: formData.eventType,
                 access_level: formData.accessLevel,
-                banner_url: bannerUrl
-            });
+                banner_url: bannerUrl || bannerPreview,
+                // NEW PAYMENT FIELDS
+                is_paid: formData.isPaid,
+                payment_amount: formData.isPaid ? Number(formData.paymentAmount) : 0,
+                payment_methods: formData.isPaid ? formData.paymentMethods : []
+            };
+
+
+
+        if(id){
+            // update existing event
+            const {error: updateError}=await supabase
+            .from('events')
+            .update(eventData)
+            .eq('id',id);
+
+            if(updateError) throw updateError;
+
+            setSuccessMessage('Event updated successfully!');
+            setShowSuccess(true);
+            setTimeout(()=>{
+                setShowSuccess(false);
+                navigate('/event-management');
+            },2000);
+
+        }else{
+            // create new event into database 
+            const {error:insertError}= await supabase
+            .from('events')
+            .insert(eventData);
     
             if(insertError) throw insertError;
     
@@ -217,7 +257,11 @@ const CreateEvent = () => {
                 registrationFee:'',
                 eventType:'',
                 accessLevel:'kucc-only',
-                banner: null
+                banner: null,
+                isPaid: false,
+                paymentAmount: '0',
+                paymentMethods: ['Cash', 'Online']
+
             });
             setBannerPreview(null);
          
@@ -264,14 +308,18 @@ const fetchEvent=async () => {
         registrationFee: data.registration_fee,
         eventType: data.event_type,
         accessLevel: data.access_level,
-        banner: null
+        banner: null,
+        isPaid: data.is_paid || false,
+        paymentAmount: data.payment_amount || '0',
+        paymentMethods: data.payment_methods || ['Cash', 'Online']
+
     });
     setBannerPreview(data.banner_url || null);
 };
 fetchEvent();
 },[id]);
         
-    return (
+   return (
         <AdminLayout>
             {showSuccess && (
                 <SuccessToast
@@ -283,7 +331,7 @@ fetchEvent();
             <div className="max-w-4xl mx-auto">
                 <div className="mb-6 flex items-center gap-4">
                     <button
-                        onClick={() => navigate('/dashboard')}
+                        onClick={() => navigate('/event-management')}
                         className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
                     >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -291,13 +339,16 @@ fetchEvent();
                         </svg>
                     </button>
                     <h2 className="text-2xl font-bold" style={{ color: '#585F8A' }}>
-                        {id ? 'Edit Event' : 'Create New Event'}</h2>
+                        {id ? 'Edit Event' : 'Create New Event'}
+                    </h2>
                 </div>
 
                 <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm p-8">
+                    {/* Event Details Section */}
                     <div className="mb-6">
                         <h3 className="text-lg font-semibold mb-4" style={{ color: '#585F8A' }}>Event Details</h3>
 
+                        {/* Banner Upload */}
                         <div className="mb-6">
                             <label className="block text-sm font-medium mb-2">Event Banner</label>
                             <div
@@ -343,6 +394,7 @@ fetchEvent();
                             {errors.banner && <p className="text-red-500 text-xs mt-1">{errors.banner}</p>}
                         </div>
 
+                        {/* Event Name */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium mb-2">
                                 Event Name <span className="text-red-500">*</span>
@@ -353,10 +405,11 @@ fetchEvent();
                                 value={formData.eventName}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${errors.eventName && touched.eventName
-                                    ? 'border-red-500 focus:ring-red-200'
-                                    : 'border-gray-300 focus:ring-blue-200'
-                                    }`}
+                                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                                    errors.eventName && touched.eventName
+                                        ? 'border-red-500 focus:ring-red-200'
+                                        : 'border-gray-300 focus:ring-blue-200'
+                                }`}
                                 placeholder="Enter event name"
                             />
                             {errors.eventName && touched.eventName && (
@@ -364,6 +417,7 @@ fetchEvent();
                             )}
                         </div>
 
+                        {/* Description */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium mb-2">
                                 Description <span className="text-red-500">*</span>
@@ -374,10 +428,11 @@ fetchEvent();
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 rows={4}
-                                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all resize-none ${errors.description && touched.description
-                                    ? 'border-red-500 focus:ring-red-200'
-                                    : 'border-gray-300 focus:ring-blue-200'
-                                    }`}
+                                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all resize-none ${
+                                    errors.description && touched.description
+                                        ? 'border-red-500 focus:ring-red-200'
+                                        : 'border-gray-300 focus:ring-blue-200'
+                                }`}
                                 placeholder="Enter event description"
                             />
                             {errors.description && touched.description && (
@@ -385,6 +440,7 @@ fetchEvent();
                             )}
                         </div>
 
+                        {/* Date and Time */}
                         <div className="grid grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label className="block text-sm font-medium mb-2">
@@ -396,10 +452,11 @@ fetchEvent();
                                     value={formData.date}
                                     onChange={handleChange}
                                     onBlur={handleBlur}
-                                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${errors.date && touched.date
-                                        ? 'border-red-500 focus:ring-red-200'
-                                        : 'border-gray-300 focus:ring-blue-200'
-                                        }`}
+                                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                                        errors.date && touched.date
+                                            ? 'border-red-500 focus:ring-red-200'
+                                            : 'border-gray-300 focus:ring-blue-200'
+                                    }`}
                                 />
                                 {errors.date && touched.date && (
                                     <p className="text-red-500 text-xs mt-1">{errors.date}</p>
@@ -415,10 +472,11 @@ fetchEvent();
                                     value={formData.time}
                                     onChange={handleChange}
                                     onBlur={handleBlur}
-                                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${errors.time && touched.time
-                                        ? 'border-red-500 focus:ring-red-200'
-                                        : 'border-gray-300 focus:ring-blue-200'
-                                        }`}
+                                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                                        errors.time && touched.time
+                                            ? 'border-red-500 focus:ring-red-200'
+                                            : 'border-gray-300 focus:ring-blue-200'
+                                    }`}
                                 />
                                 {errors.time && touched.time && (
                                     <p className="text-red-500 text-xs mt-1">{errors.time}</p>
@@ -426,6 +484,7 @@ fetchEvent();
                             </div>
                         </div>
 
+                        {/* Location */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium mb-2">
                                 Location <span className="text-red-500">*</span>
@@ -436,10 +495,11 @@ fetchEvent();
                                 value={formData.location}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${errors.location && touched.location
-                                    ? 'border-red-500 focus:ring-red-200'
-                                    : 'border-gray-300 focus:ring-blue-200'
-                                    }`}
+                                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                                    errors.location && touched.location
+                                        ? 'border-red-500 focus:ring-red-200'
+                                        : 'border-gray-300 focus:ring-blue-200'
+                                }`}
                                 placeholder="Enter event location"
                             />
                             {errors.location && touched.location && (
@@ -447,6 +507,7 @@ fetchEvent();
                             )}
                         </div>
 
+                        {/* Max Participants */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium mb-2">
                                 Max Participants <span className="text-red-500">*</span>
@@ -458,10 +519,11 @@ fetchEvent();
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 min="1"
-                                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${errors.maxParticipants && touched.maxParticipants
-                                    ? 'border-red-500 focus:ring-red-200'
-                                    : 'border-gray-300 focus:ring-blue-200'
-                                    }`}
+                                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                                    errors.maxParticipants && touched.maxParticipants
+                                        ? 'border-red-500 focus:ring-red-200'
+                                        : 'border-gray-300 focus:ring-blue-200'
+                                }`}
                                 placeholder="Enter maximum participants"
                             />
                             {errors.maxParticipants && touched.maxParticipants && (
@@ -469,6 +531,7 @@ fetchEvent();
                             )}
                         </div>
 
+                        {/* Registration Fee */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium mb-2">
                                 Registration Fee (NPR) <span className="text-red-500">*</span>
@@ -480,10 +543,11 @@ fetchEvent();
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 min="0"
-                                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${errors.registrationFee && touched.registrationFee
-                                    ? 'border-red-500 focus:ring-red-200'
-                                    : 'border-gray-300 focus:ring-blue-200'
-                                    }`}
+                                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                                    errors.registrationFee && touched.registrationFee
+                                        ? 'border-red-500 focus:ring-red-200'
+                                        : 'border-gray-300 focus:ring-blue-200'
+                                }`}
                                 placeholder="Enter registration fee"
                             />
                             {errors.registrationFee && touched.registrationFee && (
@@ -491,6 +555,7 @@ fetchEvent();
                             )}
                         </div>
 
+                        {/* Event Type */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium mb-2">
                                 Event Type <span className="text-red-500">*</span>
@@ -500,10 +565,11 @@ fetchEvent();
                                 value={formData.eventType}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${errors.eventType && touched.eventType
-                                    ? 'border-red-500 focus:ring-red-200'
-                                    : 'border-gray-300 focus:ring-blue-200'
-                                    }`}
+                                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                                    errors.eventType && touched.eventType
+                                        ? 'border-red-500 focus:ring-red-200'
+                                        : 'border-gray-300 focus:ring-blue-200'
+                                }`}
                             >
                                 <option value="">Select event type</option>
                                 {eventTypes.map(type => (
@@ -515,6 +581,7 @@ fetchEvent();
                             )}
                         </div>
 
+                        {/* Access Level */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium mb-2">
                                 Access Level <span className="text-red-500">*</span>
@@ -545,8 +612,8 @@ fetchEvent();
                                 <label
                                     className="flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all"
                                     style={{
-                                        borderColor: formData.accessLevel === 'all-students' ? '#585F8A' : '#e5e7eb',
-                                        backgroundColor: formData.accessLevel === 'all-students' ? '#585F8A10' : 'white'
+                                        borderColor: formData.accessLevel === 'ku-students' ? '#585F8A' : '#e5e7eb',
+                                        backgroundColor: formData.accessLevel === 'ku-students' ? '#585F8A10' : 'white'
                                     }}
                                 >
                                     <input
@@ -582,11 +649,99 @@ fetchEvent();
                                     />
                                     <div>
                                         <p className="font-medium" style={{ color: '#585F8A' }}>Open For All</p>
-                                        <p className="text-sm text-gray-500">All the students of any universities can register</p>
+                                        <p className="text-sm text-gray-500">All students of any universities can register</p>
                                     </div>
                                 </label>
                             </div>
                         </div>
+                    </div>
+
+                    {/* NEW PAYMENT SECTION */}
+                    <div className="mb-6 border-t pt-6">
+                        <h3 className="text-lg font-semibold mb-4" style={{ color: '#585F8A' }}>Payment Settings</h3>
+
+                        {/* Is Paid Event Toggle */}
+                        <div className="mb-4">
+                            <label className="flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all"
+                                style={{
+                                    borderColor: formData.isPaid ? '#585F8A' : '#e5e7eb',
+                                    backgroundColor: formData.isPaid ? '#585F8A10' : 'white'
+                                }}
+                            >
+                                <input
+                                    type="checkbox"
+                                    name="isPaid"
+                                    checked={formData.isPaid}
+                                    onChange={handleChange}
+                                    className="w-5 h-5"
+                                    style={{ accentColor: '#585F8A' }}
+                                />
+                                <div>
+                                    <p className="font-medium" style={{ color: '#585F8A' }}>This is a Paid Event</p>
+                                    <p className="text-sm text-gray-500">Participants need to pay to register</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        {/* Payment Amount (only if isPaid is true) */}
+                        {formData.isPaid && (
+                            <>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium mb-2">
+                                        Payment Amount (NPR) <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="paymentAmount"
+                                        value={formData.paymentAmount}
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        min="0"
+                                        step="0.01"
+                                        className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                                            errors.paymentAmount && touched.paymentAmount
+                                                ? 'border-red-500 focus:ring-red-200'
+                                                : 'border-gray-300 focus:ring-blue-200'
+                                        }`}
+                                        placeholder="Enter payment amount"
+                                    />
+                                    {errors.paymentAmount && touched.paymentAmount && (
+                                        <p className="text-red-500 text-xs mt-1">{errors.paymentAmount}</p>
+                                    )}
+                                </div>
+
+                                {/* Payment Methods */}
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium mb-2">
+                                        Accepted Payment Methods <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                        {availablePaymentMethods.map(method => (
+                                            <label
+                                                key={method}
+                                                className="flex items-center gap-2 p-3 border-2 rounded-lg cursor-pointer transition-all"
+                                                style={{
+                                                    borderColor: formData.paymentMethods.includes(method) ? '#585F8A' : '#e5e7eb',
+                                                    backgroundColor: formData.paymentMethods.includes(method) ? '#585F8A10' : 'white'
+                                                }}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.paymentMethods.includes(method)}
+                                                    onChange={() => handlePaymentMethodToggle(method)}
+                                                    className="w-4 h-4"
+                                                    style={{ accentColor: '#585F8A' }}
+                                                />
+                                                <span className="text-sm font-medium">{method}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    {errors.paymentMethods && (
+                                        <p className="text-red-500 text-xs mt-1">{errors.paymentMethods}</p>
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
 
                     <div className="flex gap-4 pt-6">
@@ -595,7 +750,7 @@ fetchEvent();
                             className="flex-1 py-3 rounded-xl text-white font-medium hover:opacity-90 transition-all"
                             style={{ backgroundColor: '#585F8A' }}
                         >
-                          {id ? 'Update Event' : 'Create Event'}
+                            {id ? 'Update Event' : 'Create Event'}
                         </button>
                         <button
                             type="button"
@@ -605,7 +760,7 @@ fetchEvent();
                         >
                             Save as Draft
                         </button>
-                  </div>
+                    </div>
                 </form>
             </div>
 

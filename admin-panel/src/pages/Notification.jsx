@@ -1,7 +1,6 @@
 import { Bell, Send } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "../services/supabaseClient";
-import { createNotification } from "../services/notificationService.js";
 
 const SEND_TO_OPTIONS = [
   "All Members",
@@ -46,12 +45,29 @@ export default function Notification() {
       priority: form.priority,
       status: type,
        scheduled_at: form.schedule
-      ? `${form.date} ${form.time}`
+      ? new Date(`${form.date}T${form.time}`).toISOString()
       : null,
-      created_by:session.user.id,
+     
     };
 
-    await createNotification(payload);
+    const res=await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/notifications`,
+      {
+        method: "POST",
+        headers:{
+          "Content-Type":"application/json",
+          Authorization:`Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const data=await res.json();
+    console.log("data from /api/notifications is",data);
+
+    if(!res.ok){
+     throw new Error(data.error || "Failed to create notification"); 
+    }
 
     alert(
       type === "sent"

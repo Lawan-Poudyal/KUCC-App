@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import clubLogo from '../assets/kucc.png'
 import { supabase } from '../services/supabaseClient'
@@ -14,46 +14,19 @@ function Login() {
         e.preventDefault()
         setError('')
 
-        // 1.Sign in using Supabase Auth
-        const { data, error:authError } = await supabase.auth.signInWithPassword({
-            email,
-            password
-        })
-        if (authError){
-            setError(authError.message)
-            return
-        }
+         const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-        // 2.Check if user is admin
-        const {data: adminData, error:adminError}=await supabase
-        .from('admins')
-        .select('*')
-        .eq('id',data.user.id)
-        .single()
-
-        if(adminError || !adminData){
-            await supabase.auth.signOut()
-            setError('Access denied.You are not an admin')
-            return
-        }
-        if(!adminData.is_active){
-            await supabase.auth.signOut()
-            setError('Admin account is disabled.')
-            return
-        }
-          // 3. Success → Dashboard
-          navigate('/dashboard')
+    if (error) {
+      setError(error.message);
+      return;
     }
 
-    useEffect(() => {
-        const checkSession = async () => {
-            const { data } = await supabase.auth.getSession()
-            if (data.session) {
-                navigate('/dashboard')
-            }
-        }
-        checkSession()
-    }, [])
+    //  Supabase session created automatically
+    navigate("/dashboard");
+  };
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-gray-50 to-gray-100">
@@ -229,4 +202,4 @@ function Login() {
     )
 }
 
-export default Login
+export default Login;
