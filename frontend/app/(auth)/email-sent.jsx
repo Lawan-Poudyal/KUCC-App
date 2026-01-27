@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as AuthSession from "expo-auth-session";
 import { router, useLocalSearchParams } from "expo-router";
 import { Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import * as Animatable from "react-native-animatable";
@@ -10,14 +11,20 @@ export default function EmailSentScreen() {
   const resendEmail = async () => {
     if (!email) return;
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: "yourapp://reset-password",
-    });
+const redirectUrl = AuthSession.makeRedirectUri({
+  scheme: "kuccapp", 
+});
 
-    if (!error) {
-      alert("Reset link sent again!");
-    }
-  };
+const { error } = await supabase.auth.resetPasswordForEmail(email, {
+  redirectTo: redirectUrl,
+});
+
+if (!error) {
+  alert("Reset link sent again!");
+} else {
+  alert(error.message);
+}
+
 
   return (
     <View style={styles.container}>
@@ -122,3 +129,4 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 });
+}
