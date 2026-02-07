@@ -1,19 +1,13 @@
 {
   "expo": {
     "name": "KUCC-App",
-    "slug": "KUCC-App",
+    "slug": "kucc-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/kucc-logo.png",
-    "scheme": "kuccapp",
-    
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/kucc-logo.png",
-        "backgroundColor": "#E6F4FE"
-      },
-      "package": "com.anonymous.KUCCApp"
-    },
+    "userInterfaceStyle": "light",
+     "scheme": "kuccapp",
+
     "plugins": [
       "expo-router",
       [
@@ -25,8 +19,48 @@
         }
       ]
     ],
+
+     "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kucc.kuccapp",
+       "associatedDomains": [
+        "applinks:ahilsdrlrziqhziuaygf.supabase.co"
+      ]
+    },
+    
+    "android": {
+      "package": "com.kucc.kuccapp",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/kucc-logo.png",
+        "backgroundColor": "#E6F4FE"
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+               "scheme": "https",
+              "host": "ahilsdrlrziqhziuaygf.supabase.co",
+              "pathPrefix": "/auth/v1/verify"
+            },
+
+            {
+              "scheme": "kuccapp"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
+    },
+
     "extra": {
-      "router": {},
+      "router": {
+      "origin": false
+    },
       "eas": {
         "projectId": "45e34849-d704-4045-bf5d-a81e94f03429"
       }

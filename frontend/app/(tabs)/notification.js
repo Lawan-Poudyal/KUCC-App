@@ -1,289 +1,231 @@
-import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+// app/(tabs)/notification.js
+import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
+  ScrollView,
   View,
+  ActivityIndicator,
+  RefreshControl,
 } from "react-native";
+import { getNotifications } from "../../services/notificationService.js";
+import { groupNotifications } from "../../utils/notificationUtils.js";
 
-const notifications = {
-  today: [
-    {
-      title: "Registration open for Tech Talk 2025!",
-      description:
-        "Registration for Tech Talk 2025 is now open! Seats are limited. Make sure to register before Dec 5, 2025.",
-      time: "2 hr",
-    },
-    {
-      title: "Club meeting today at 3 PM.",
-      description: "This is a reminder for today's club meeting at 3:00 PM.",
-      time: "5 hr",
-    },
-    {
-      title: "New volunteering opportunity available.",
-      description:
-        "Our club is partnering with KU Welfare Cell for a volunteering initiative.",
-      time: "18 hr",
-    },
-  ],
-  weekly: [
-    {
-      title: "Your event payment is confirmed.",
-      description: "We've received your payment for Hackfest 2025.",
-      time: "3d",
-    },
-    {
-      title: "Your club membership has been approved.",
-      description:
-        "Congratulations! Your membership request for KUCC has been approved.",
-      time: "5d",
-    },
-  ],
-};
+
+
 
 export default function NotificationScreen() {
-  const [selectedNotification, setSelectedNotification] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [notifications, setNotifications] = useState({ 
+    today: [], 
+    weekly: [], 
+    older: [] 
+  });
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
 
-  function openNotification(item) {
-    setLoading(true);
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
 
-    setTimeout(() => {
-      setSelectedNotification(item);
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getNotifications();
+      const grouped = groupNotifications(data);
+      setNotifications(grouped);
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+      setError(err.message);
+    } finally {
       setLoading(false);
-    }, 2000); // simulate loading
-  }
+    }
+  };
 
-  function goBack() {
-    setSelectedNotification(null);
-  }
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchNotifications();
+    setRefreshing(false);
+  };
 
-  /* ---------------- FULL SCREEN LOADER ---------------- */
-  if (loading) {
-    return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#5A67F8" />
-        <Text style={styles.loadingText}>
-          Generating notification details...
-        </Text>
+  const renderNotification = (item) => (
+    <View key={item.id} style={[
+      styles.notificationCard,
+      { borderLeftColor: getPriorityColor(item.priority) }
+    ]}>
+      <View style={styles.notificationHeader}>
+        <Text style={styles.notificationTitle}>{item.title}</Text>
+        {item.priority && (
+          <View style={[
+            styles.priorityBadge,
+            { backgroundColor: getPriorityColor(item.priority) }
+          ]}>
+            <Text style={styles.priorityText}>
+              {item.priority.toUpperCase()}
+            </Text>
+          </View>
+        )}
       </View>
-    );
-  }
-
-  /* ---------------- DETAIL VIEW ---------------- */
-  if (selectedNotification) {
-    return (
-      <View style={styles.detailContainer}>
-        <TouchableOpacity style={styles.backButton} onPress={goBack}>
-          <Ionicons name="arrow-back" size={26} color="#333" />
-        </TouchableOpacity>
-
-        <Ionicons
-          name="notifications-outline"
-          size={60}
-          color="#5A67F8"
-          style={{ marginBottom: 20 }}
-        />
-
-        <Text style={styles.detailTitle}>
-          {selectedNotification.title}
-        </Text>
-        <Text style={styles.detailTime}>
-          {selectedNotification.time}
-        </Text>
-
-        <Text style={styles.detailDesc}>
-          {selectedNotification.description}
-        </Text>
-      </View>
-    );
-  }
-
-  /* ---------------- MAIN LIST (UNCHANGED STRUCTURE) ---------------- */
-  return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Notifications</Text>
-        <Ionicons name="notifications-outline" size={26} color="#333" />
-      </View>
-
-      {/* Clear all */}
-      <TouchableOpacity style={styles.clearButton}>
-        <Text style={styles.clearText}>Clear all</Text>
-      </TouchableOpacity>
-
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContainer}
-      >
-        {/* Today */}
-        <Text style={styles.sectionTitle}>Today</Text>
-        {notifications.today.map((item, index) => (
-          <NotificationCard
-            key={index}
-            item={item}
-            onPress={() => openNotification(item)}
-          />
-        ))}
-
-        {/* Earlier */}
-        <Text style={[styles.sectionTitle, { marginTop: 25 }]}>
-          Earlier this week
-        </Text>
-        {notifications.weekly.map((item, index) => (
-          <NotificationCard
-            key={index}
-            item={item}
-            onPress={() => openNotification(item)}
-          />
-        ))}
-      </ScrollView>
+      <Text style={styles.notificationMessage}>{item.message}</Text>
+      <Text style={styles.notificationTime}>
+        {new Date(item.created_at).toLocaleString()}
+      </Text>
     </View>
   );
-}
 
-/* ---------------- CARD (UNCHANGED + onPress) ---------------- */
-function NotificationCard({ item, onPress }) {
-  return (
-    <TouchableOpacity activeOpacity={0.8} onPress={onPress}>
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>{item.title}</Text>
-        <Text style={styles.cardDesc} numberOfLines={2}>
-          {item.description}
-        </Text>
-        <Text style={styles.timeText}>{item.time}</Text>
+  const getPriorityColor = (priority) => {
+    switch (priority?.toLowerCase()) {
+      case 'high':
+        return '#ff4444';
+      case 'medium':
+        return '#ffaa00';
+      case 'low':
+        return '#44ff44';
+      default:
+        return '#cccccc';
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
       </View>
-    </TouchableOpacity>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text style={styles.errorText}>Error: {error}</Text>
+        <Text onPress={fetchNotifications} style={styles.retryText}>
+          Tap to retry
+        </Text>
+      </View>
+    );
+  }
+
+  const hasNotifications = notifications.today.length > 0 || 
+                          notifications.weekly.length > 0 || 
+                          notifications.older.length > 0;
+
+  if (!hasNotifications) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text style={styles.emptyText}>No notifications yet</Text>
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
+      {notifications.today.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Today</Text>
+          {notifications.today.map(renderNotification)}
+        </View>
+      )}
+
+      {notifications.weekly.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>This Week</Text>
+          {notifications.weekly.map(renderNotification)}
+        </View>
+      )}
+
+      {notifications.older.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Older</Text>
+          {notifications.older.map(renderNotification)}
+        </View>
+      )}
+    </ScrollView>
   );
 }
 
-/* ---------------- STYLES (ORIGINAL + ADDED) ---------------- */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F7F7F9",
-    paddingTop: 55,
-    paddingHorizontal: 18,
+    backgroundColor: '#f5f5f5',
   },
-
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 5,
-  },
-
-  headerText: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#222",
-  },
-
-  clearButton: {
-    alignSelf: "flex-end",
-    marginVertical: 8,
-  },
-
-  clearText: {
-    color: "#5A67F8",
-    fontWeight: "500",
-    fontSize: 14,
-  },
-
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: "#1A1A1A",
-    marginBottom: 12,
-    marginTop: 10,
-  },
-
-  scrollContainer: {
-    paddingBottom: 150,
-  },
-
-  card: {
-    backgroundColor: "#fff",
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: 16,
-    borderRadius: 14,
-    marginBottom: 15,
-    shadowColor: "#000",
-    shadowOpacity: 0.07,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
   },
-
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    marginBottom: 6,
-    color: "#222",
+  section: {
+    padding: 16,
   },
-
-  cardDesc: {
-    fontSize: 13,
-    color: "#555",
-    marginBottom: 10,
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    color: '#333',
   },
-
-  timeText: {
-    fontSize: 12,
-    color: "#777",
-    textAlign: "right",
-    fontStyle: "italic",
-  },
-
-  /* LOADER */
-  loaderContainer: {
-    flex: 1,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  loadingText: {
-    marginTop: 15,
-    fontSize: 14,
-    color: "#555",
-  },
-
-  /* DETAIL */
-  detailContainer: {
-    flex: 1,
-    backgroundColor: "#F7F7F9",
-    paddingTop: 70,
-    paddingHorizontal: 24,
-    alignItems: "center",
-  },
-
-  backButton: {
-    position: "absolute",
-    top: 55,
-    left: 18,
-  },
-
-  detailTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    textAlign: "center",
+  notificationCard: {
+    backgroundColor: '#fff',
+    padding: 12,
     marginBottom: 8,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-
-  detailTime: {
+  notificationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  notificationTitle: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    flex: 1,
+    color: '#333',
+  },
+  priorityBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  priorityText: {
+    fontSize: 10,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  notificationMessage: {
+    marginTop: 4,
+    color: '#666',
+    lineHeight: 20,
+  },
+  notificationTime: {
     fontSize: 12,
-    color: "#777",
-    marginBottom: 20,
+    color: '#999',
+    marginTop: 4,
   },
-
-  detailDesc: {
-    fontSize: 15,
-    color: "#444",
-    lineHeight: 22,
-    textAlign: "center",
+  errorText: {
+    color: 'red',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  retryText: {
+    color: '#0000ff',
+    textDecorationLine: 'underline',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
   },
 });
+
+
