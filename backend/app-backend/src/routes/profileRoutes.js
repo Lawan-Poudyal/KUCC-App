@@ -1,11 +1,11 @@
 import express from "express";
 import { supabase } from "../config/supabase.js";
-import { requireAuth } from "../middleware/auth.js";
+import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 /* GET PROFILE */
-router.get("/", requireAuth, async (req, res) => {
+router.get("/", authMiddleware, async (req, res) => {
   const user = req.user;
 
   // Try to fetch profile
@@ -45,7 +45,7 @@ router.get("/", requireAuth, async (req, res) => {
 });
 
 /* UPDATE PROFILE */
-router.put("/", requireAuth, async (req, res) => {
+router.put("/", authMiddleware, async (req, res) => {
   const userId = req.user.id;
 
   const updates = {
