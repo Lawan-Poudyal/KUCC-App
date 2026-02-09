@@ -1,61 +1,43 @@
-import { useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
-import { fetchEvents } from "../../services/eventsApi";
+import { useUser } from "@clerk/clerk-expo";
+import { Text, View, StyleSheet } from "react-native";
 
 export default function Home() {
-  const { success } = useLocalSearchParams();
-
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchEvents()
-      .then(setEvents)
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    );
-  }
+  const { user } = useUser();
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <View style={styles.container}>
-        <FlatList
-          data={events}
-          keyExtractor={(item) => item.id.toString()} // assuming each event has 'id'
-          renderItem={({ item }) => (
-            <View style={styles.eventItem}>
-              <Text style={styles.eventName}>{item.title}</Text>
-            </View>
-          )}
-        />
-      </View>
-    </SafeAreaView>
+    <View style={styles.container}>
+      <Text style={styles.welcome}>Welcome to KUCC App!</Text>
+      {user && (
+        <>
+          <Text style={styles.info}>Email: {user.primaryEmailAddress?.emailAddress}</Text>
+          <Text style={styles.info}>
+            Name: {user.unsafeMetadata?.name || "Not provided"}
+          </Text>
+          <Text style={styles.info}>
+            Phone: {user.unsafeMetadata?.phone || "Not provided"}
+          </Text>
+        </>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: "#f0f0f0" },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  eventItem: {
-    padding: 12,
-    marginBottom: 10,
-    backgroundColor: "#fff",
-    borderRadius: 8,
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
   },
-  eventName: { fontSize: 16, fontWeight: "bold" },
+  welcome: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#383F78",
+    marginBottom: 20,
+  },
+  info: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 8,
+  },
 });

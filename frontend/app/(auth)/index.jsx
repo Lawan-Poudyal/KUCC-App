@@ -1,5 +1,6 @@
 import { router } from "expo-router";
 import { Image, Text, TouchableOpacity, View } from "react-native";
+
 export default function AuthHome() {
   return (
     <View style={{ flex: 1, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" }}>

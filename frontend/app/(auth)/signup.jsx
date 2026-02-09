@@ -15,19 +15,26 @@ import {
   View,
 } from "react-native";
 import * as Animatable from "react-native-animatable";
-import { signUpWithPassword } from "../../services/auth";
+import { useSignUp,useAuth } from "@clerk/clerk-expo"; 
+
 
 
 const { width, height } = Dimensions.get("window");
 const logoSize = 100;
 
 export default function SignUpScreen() {
+  const {isLoaded, signUp, setActive}=useSignUp();
+  const { getToken } = useAuth();
+
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 const [focusedInput, setFocusedInput] = useState(null);
+const  [loading, setLoading] = useState(false);
+const [pendingVerification, setPendingVerification] = useState(false);
+  const [code, setCode] = useState("");
 
 
  const handleSignUp = async () => {
@@ -36,18 +43,151 @@ const [focusedInput, setFocusedInput] = useState(null);
       return;
     }
 
-  try {
-   await signUpWithPassword(email, password, name, phone);
-    Alert.alert("Success", "Account created successfully");
-    router.replace("/(auth)/login");
-  } catch (err) {
-    Alert.alert("Signup failed", err.message);
+    if(password.length < 8){
+      Alert.alert("Weak Password", "Password must be at least 8 characters.");
+      return;
+    }
+
+    if(!isLoaded) return;
+
+    try {
+      setLoading(true);
+
+      // Start sign-up process using email and password provided
+      await signUp.create({
+        emailAddress: email,
+        password,
+        unsafeMetadata: {
+          name,
+          phone,
+        },
+      });
+
+      // Send user an email with verification code
+      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+
+      // Set 'pendingVerification' to true to display verification form
+      setPendingVerification(true);
+    } catch (err) {
+      console.error(JSON.stringify(err, null, 2));
+      let errorMessage = err.errors?.[0]?.message || "An error occurred during signup";
+  
+  // Make password breach error more user-friendly
+  if (errorMessage.includes("found in an online data breach")) {
+    errorMessage = "This password has been compromised in a data breach. Please choose a stronger, unique password.";
   }
+  
+  Alert.alert("Signup failed", errorMessage);
+    } finally {
+      setLoading(false);
+    }
+
 };
 
-  const handleLogin = () => {
-    router.replace("/(auth)/login");
+// handle submission of verification form
+const onVerifyPress = async () => {
+    if (!isLoaded) return;
+
+    try {
+      setLoading(true);
+
+      const signUpAttempt = await signUp.attemptEmailAddressVerification({
+        code,
+      });
+
+      if (signUpAttempt.status === "complete") {
+        await setActive({ session: signUpAttempt.createdSessionId });
+        
+        // ✅ BETTER: Let UserSync component handle it
+        // Or wait briefly and use getToken
+        setTimeout(async () => {
+          try {
+            const token = await getToken();
+            if (!token) {
+              console.log('No token yet, UserSync will handle it');
+              return;
+            }
+            
+            const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/user/sync`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+            });
+            
+            if (response.ok) {
+              console.log('✅ New user synced to Supabase');
+            }
+          } catch (syncError) {
+            console.log('Sync will be handled by UserSync component');
+          }
+        }, 500);
+        
+        Alert.alert("Success", "Account created successfully!");
+        router.replace("/(tabs)");
+      } else {
+        console.error(JSON.stringify(signUpAttempt, null, 2));
+        Alert.alert("Verification Failed", "Please try again.");
+      }
+    } catch (err) {
+      console.error(JSON.stringify(err, null, 2));
+      Alert.alert(
+        "Verification Failed",
+        err.errors?.[0]?.message || "Invalid verification code"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // if  pending verification, show verification form
+  if (pendingVerification) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <View style={{ flex: 1, justifyContent: "center", paddingHorizontal: 30 }}>
+            <Text style={styles.verifyTitle}>Verify your email</Text>
+            <Text style={styles.verifyDescription}>
+              A verification code has been sent to {email}
+            </Text>
+
+            <View style={styles.inputBox}>
+              <Ionicons name="mail-outline" size={18} color="#383F78" />
+              <TextInput
+                style={styles.textInput}
+                value={code}
+                placeholder="Enter verification code"
+                placeholderTextColor="#999"
+                onChangeText={setCode}
+                keyboardType="numeric"
+              />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.button, loading && styles.buttonDisabled]}
+              onPress={onVerifyPress}
+              disabled={loading}
+            >
+              <Text style={styles.buttonText}>
+                {loading ? "VERIFYING..." : "VERIFY"}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{ marginTop: 20, alignSelf: "center" }}
+              onPress={() => setPendingVerification(false)}
+            >
+              <Text style={{ color: "#5B5F8D" }}>Go back</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -89,7 +229,7 @@ const [focusedInput, setFocusedInput] = useState(null);
             <Ionicons name="person-outline" size={18} color="#383F78" />
             <TextInput
               style={styles.textInput}
-              placeholder="Name"
+              placeholder=" Full Name"
               value={name}
               onChangeText={setName}
               onFocus={() => setFocusedInput("name")}
@@ -107,7 +247,7 @@ const [focusedInput, setFocusedInput] = useState(null);
             <Ionicons name="call-outline" size={18} color="#383F78" />
             <TextInput
               style={styles.textInput}
-              placeholder="Phone"
+              placeholder="Phone Number"
               keyboardType="phone-pad"
               value={phone}
               onChangeText={setPhone}
@@ -126,7 +266,7 @@ const [focusedInput, setFocusedInput] = useState(null);
             <Ionicons name="mail-outline" size={18} color="#383F78" />
             <TextInput
               style={styles.textInput}
-              placeholder="Email"
+              placeholder="Email Address"
               autoCapitalize="none"
               keyboardType="email-address"
               value={email}
@@ -146,7 +286,7 @@ const [focusedInput, setFocusedInput] = useState(null);
             <Ionicons name="lock-closed-outline" size={18} color="#383F78" />
             <TextInput
               style={styles.textInput}
-              placeholder="Password"
+              placeholder="Password (min 8 characters)"
               secureTextEntry={!showPassword}
               value={password}
               onChangeText={setPassword}
@@ -165,26 +305,14 @@ const [focusedInput, setFocusedInput] = useState(null);
           </View>
 
           {/* SIGNUP BUTTON */}
-          <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-            <Text style={styles.buttonText}>SIGN UP</Text>
-          </TouchableOpacity>
-
-          {/* OR */}
-          <View style={styles.orRow}>
-            <View style={styles.line} />
-            <Text style={styles.orText}>OR</Text>
-            <View style={styles.line} />
-          </View>
-
-          {/* GOOGLE */}
-          <TouchableOpacity style={styles.googleBtn}>
-            <Image
-              source={{
-                uri: "https://developers.google.com/identity/images/g-logo.png",
-              }}
-              style={{ width: 20, height: 20, marginRight: 10 }}
-            />
-            <Text style={styles.googleText}>Sign up with Google</Text>
+          <TouchableOpacity
+           style={[styles.button, loading && styles.buttonDisabled]} 
+           onPress={handleSignUp}
+           disabled={loading}
+           >
+            <Text style={styles.buttonText}>
+              {loading ? "CREATING ACCOUNT..." : "SIGN UP"}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -268,43 +396,15 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
 
+  buttonDisabled:{
+    opacity: 0.6,
+  },
+
   buttonText: {
     color: "#fff",
     fontWeight: "bold",
     letterSpacing: 1,
   },
-
-  orRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 20,
-  },
-
-  line: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#ccc",
-  },
-
-  orText: {
-    marginHorizontal: 10,
-    color: "#999",
-  },
-
-  googleBtn: {
-    flexDirection: "row",
-    backgroundColor: "#fff",
-    padding: 12,
-    borderRadius: 30,
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 3,
-  },
-
-  googleText: {
-    fontWeight: "600",
-  },
-
  
   footerBox: {
   backgroundColor: "#5B5F8D",
@@ -317,7 +417,7 @@ footerSubtitle: {
   color: "#FFFFFF",
   fontSize: 12,
   marginBottom: 14,
-     textDecorationLine: "underline",
+  textDecorationLine: "underline",
 },
 
   footerTitle: {
@@ -325,4 +425,19 @@ footerSubtitle: {
     fontSize: 13,
    
   },
+  verifyTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#383F78",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+
+  verifyDescription: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 30,
+    textAlign: "center",
+  },
+
 });
