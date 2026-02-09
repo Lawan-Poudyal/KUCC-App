@@ -1,0 +1,27 @@
+{
+  "name": "app_backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "clerk",
+    "supabase",
+    "express",
+    "authentication"
+  ],
+  "author": "kucc",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@clerk/express": "^1.7.69",
+    "@supabase/supabase-js": "^2.95.3",
+    "dotenv": "^17.2.4",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}

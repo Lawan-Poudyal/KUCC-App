@@ -47,7 +47,7 @@ export const getEventRegistrationsCount=async (eventId) => {
 
     const {count,error}=await supabase
     .from('event_registrations')
-    .select("*",{count:"exact"}
+    .select("*",{count:"exact", head: true}
     )
     .eq("event_id",eventId);
 
@@ -56,20 +56,21 @@ export const getEventRegistrationsCount=async (eventId) => {
 };
 
 // get all registrations (Admin page)
-export const getAllEventRegistrations=async () => {
-    const {data,error}= await supabase
-    .from('event_registrations')
-    .select(`
-      id,
-      status,
-      user_id,
-      event_id 
-    `)
-    .order("created_at", {ascending: false});
 
-    if(error) throw error;
-    return data;
+ export const getAllEventRegistrations=async () => {
+    const {data,error}= await supabase
+    .from('event_applications_view')
+    .select('*')
+     .order('applied_at', { ascending: false });
+
+     if (error) {
+        console.error('Error fetching registrations:', error);
+        throw error;
+    }
+    
+    return data || [];
 }
+
 
 // approve/reject registrations
 export const updateRegistrationStatus=async (id,status) => {
@@ -117,6 +118,9 @@ export const getEventById= async (eventId) => {
       event_time,
       max_participants,
       status,
+      is_paid,
+      payment_amount,
+      payment_methods,
       created_at
     `)
     .eq("id",eventId)

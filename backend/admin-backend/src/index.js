@@ -1,0 +1,12 @@
+
+import app from './app.js';
+import { supabase } from './config/supabase.js';
+
+const PORT=process.env.PORT || 5000;
+
+
+
+app.listen(PORT,()=>{
+    console.log(`Admin server is running on port ${PORT}`);
+      console.log(" Supabase client initialized");
+});
