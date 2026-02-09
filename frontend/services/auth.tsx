@@ -1,16 +1,15 @@
 import { supabase } from "../lib/supabase";
 
 /* LOGIN */
-export const loginWithPassword = async (
-  email: string,
-  password: string
-) => {
+export const loginWithPassword = async (email: string, password: string) => {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
 
   if (error) throw error;
+  //console.log("ACCESS TOKEN:", data.session?.access_token);
+
   return data;
 };
 
@@ -19,7 +18,7 @@ export const signUpWithPassword = async (
   email: string,
   password: string,
   name?: string,
-  phone?: string
+  phone?: string,
 ) => {
   const { data, error } = await supabase.auth.signUp({
     email,
