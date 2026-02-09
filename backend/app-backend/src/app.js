@@ -7,10 +7,16 @@ import profileRoutes from "./routes/profileRoutes.js";
 const app = express();
 app.use(cors());
 app.use(express.json());
+
 app.use(logger);
+
+app.use("/api/user", userRoutes);
+app.use("/api/data", itemRoutes);
 
 app.use("/api/profile", profileRoutes);
 app.use("/api/events", eventRoutes);
+
+app.use((req, res) => res.status(404).json({ error: "Route not found" }));
 
 // Global error handler
 app.use((err, req, res, next) => {
