@@ -37,109 +37,157 @@ const [pendingVerification, setPendingVerification] = useState(false);
   const [code, setCode] = useState("");
 
 
- const handleSignUp = async () => {
-    if (!name || !phone || !email || !password) {
-      Alert.alert("Missing Information", "Please fill all fields.");
-      return;
-    }
-
-    if(password.length < 8){
-      Alert.alert("Weak Password", "Password must be at least 8 characters.");
-      return;
-    }
-
-    if(!isLoaded) return;
-
-    try {
-      setLoading(true);
-
-      // Start sign-up process using email and password provided
-      await signUp.create({
-        emailAddress: email,
-        password,
-        unsafeMetadata: {
-          name,
-          phone,
-        },
-      });
-
-      // Send user an email with verification code
-      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
-
-      // Set 'pendingVerification' to true to display verification form
-      setPendingVerification(true);
-    } catch (err) {
-      console.error(JSON.stringify(err, null, 2));
-      let errorMessage = err.errors?.[0]?.message || "An error occurred during signup";
-  
-  // Make password breach error more user-friendly
-  if (errorMessage.includes("found in an online data breach")) {
-    errorMessage = "This password has been compromised in a data breach. Please choose a stronger, unique password.";
+const handleSignUp = async () => {
+  if (!name || !phone || !email || !password) {
+    Alert.alert("Missing Information", "Please fill all fields.");
+    return;
   }
-  
-  Alert.alert("Signup failed", errorMessage);
-    } finally {
-      setLoading(false);
+
+  if (password.length < 8) {
+    Alert.alert("Weak Password", "Password must be at least 8 characters.");
+    return;
+  }
+
+  // ✅ Check if Clerk is loaded AND signUp exists
+  if (!isLoaded || !signUp) {
+    Alert.alert("Error", "Authentication service is not ready. Please try again.");
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    // Start sign-up process using email and password provided
+    await signUp.create({
+      emailAddress: email,
+      password,
+      unsafeMetadata: {
+        name,
+        phone,
+      },
+    });
+
+    // Send user an email with verification code
+    await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+
+    // Set 'pendingVerification' to true to display verification form
+    setPendingVerification(true);
+  } catch (err) {
+    console.error("Signup Error:", JSON.stringify(err, null, 2));
+    
+    // ✅ Better error handling
+    let errorMessage = "An error occurred during signup";
+    
+    if (err?.errors && Array.isArray(err.errors) && err.errors.length > 0) {
+      errorMessage = err.errors[0].message;
+    } else if (err?.message) {
+      errorMessage = err.message;
     }
 
+    // Make password breach error more user-friendly
+    if (errorMessage.includes("found in an online data breach")) {
+      errorMessage = "This password has been compromised in a data breach. Please choose a stronger, unique password.";
+    }
+
+    Alert.alert("Signup failed", errorMessage);
+  } finally {
+    setLoading(false);
+  }
 };
 
 // handle submission of verification form
+
 const onVerifyPress = async () => {
-    if (!isLoaded) return;
+  if (!isLoaded || !signUp) {
+    Alert.alert("Error", "Authentication service is not ready. Please try again.");
+    return;
+  }
 
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      const signUpAttempt = await signUp.attemptEmailAddressVerification({
-        code,
-      });
+    const signUpAttempt = await signUp.attemptEmailAddressVerification({
+      code,
+    });
 
-      if (signUpAttempt.status === "complete") {
-        await setActive({ session: signUpAttempt.createdSessionId });
+    if (signUpAttempt.status === "complete") {
+      await setActive({ session: signUpAttempt.createdSessionId });
+      
+      console.log('🔄 Starting user sync...');
+      
+      // ✅ WAIT for sync to complete BEFORE navigating
+      try {
+        let token = null;
+        let retries = 0;
+        const maxRetries = 5;
         
-        // ✅ BETTER: Let UserSync component handle it
-        // Or wait briefly and use getToken
-        setTimeout(async () => {
-          try {
-            const token = await getToken();
-            if (!token) {
-              console.log('No token yet, UserSync will handle it');
-              return;
-            }
-            
-            const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/user/sync`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-              },
-            });
-            
-            if (response.ok) {
-              console.log('✅ New user synced to Supabase');
-            }
-          } catch (syncError) {
-            console.log('Sync will be handled by UserSync component');
+        // Retry getting token if not immediately available
+        while (!token && retries < maxRetries) {
+          console.log(`🔑 Attempt ${retries + 1} to get token...`);
+          token = await getToken();
+          if (!token) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+            retries++;
           }
-        }, 500);
+        }
         
-        Alert.alert("Success", "Account created successfully!");
-        router.replace("/(tabs)");
-      } else {
-        console.error(JSON.stringify(signUpAttempt, null, 2));
-        Alert.alert("Verification Failed", "Please try again.");
+        if (!token) {
+          console.error('❌ Failed to get token after', maxRetries, 'retries');
+          Alert.alert("Warning", "Account created but sync may be delayed. Please restart the app if data doesn't appear.");
+          router.replace("/(tabs)");
+          return;
+        }
+        
+        console.log('✅ Token obtained, calling sync API...');
+        console.log('🌐 API URL:', process.env.EXPO_PUBLIC_API_URL);
+        
+        const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/user/sync`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        console.log('📡 Response status:', response.status);
+        
+        const responseData = await response.json();
+        console.log('📦 Response data:', responseData);
+        
+        if (response.ok) {
+          console.log('✅ New user synced to Supabase:', responseData);
+          Alert.alert("Success", "Account created successfully!");
+        } else {
+          console.error('❌ Sync failed with status:', response.status);
+          console.error('❌ Error details:', responseData);
+          Alert.alert("Warning", "Account created but sync failed. Your data may not be available yet.");
+        }
+      } catch (syncError) {
+        console.error('❌ Sync error:', syncError);
+        console.error('❌ Error details:', syncError.message);
+        Alert.alert("Warning", "Account created but sync encountered an error.");
       }
-    } catch (err) {
-      console.error(JSON.stringify(err, null, 2));
-      Alert.alert(
-        "Verification Failed",
-        err.errors?.[0]?.message || "Invalid verification code"
-      );
-    } finally {
-      setLoading(false);
+      
+      router.replace("/(tabs)");
+    } else {
+      console.error("Verification incomplete:", JSON.stringify(signUpAttempt, null, 2));
+      Alert.alert("Verification Failed", "Please try again.");
     }
-  };
+  } catch (err) {
+    console.error("Verification Error:", JSON.stringify(err, null, 2));
+    
+    let errorMessage = "Invalid verification code";
+    if (err?.errors && Array.isArray(err.errors) && err.errors.length > 0) {
+      errorMessage = err.errors[0].message;
+    } else if (err?.message) {
+      errorMessage = err.message;
+    }
+    
+    Alert.alert("Verification Failed", errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // if  pending verification, show verification form
   if (pendingVerification) {

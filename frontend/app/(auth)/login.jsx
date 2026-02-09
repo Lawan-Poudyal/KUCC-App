@@ -15,15 +15,14 @@ import {
   View,
 } from "react-native";
 import * as Animatable from "react-native-animatable";
-import  { useSignIn,useAuth } from "@clerk/clerk-expo";
-
+import { useSignIn, useAuth } from "@clerk/clerk-expo";
 
 const { width, height } = Dimensions.get("window");
 const logoSize = 100;
 
 export default function LoginScreen() {
-  const {signIn, setActive, isLoaded}=useSignIn();
-  const {getToken}=useAuth();
+  const { signIn, setActive, isLoaded } = useSignIn();
+  const { getToken } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,77 +31,105 @@ export default function LoginScreen() {
   const [focusedInput, setFocusedInput] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  
-  const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert(
-        "Missing Information",
-        "Please enter both email and password.",
-      );
-      return;
-    }
-    if(!isLoaded) return;
+ const handleLogin = async () => {
+  if (!email.trim() || !password.trim()) {
+    Alert.alert(
+      "Missing Information",
+      "Please enter both email and password."
+    );
+    return;
+  }
 
-    try{
-      setLoading(true);
-      // Start the sign-in process using the email and password provided
-      const signInAttempt = await signIn.create({
-        identifier: email,
-        password,
-      });
-      // If sign-in process is complete, set the created session as active
-      // and redirect the user
-      if (signInAttempt.status === "complete") {
-        await setActive({ session: signInAttempt.createdSessionId });
+  // ✅ Check if Clerk is loaded AND signIn exists
+  if (!isLoaded || !signIn) {
+    Alert.alert("Error", "Authentication service is not ready. Please try again.");
+    return;
+  }
 
-        setTimeout(async () => {
-          try {
-            const token = await getToken();
-            if (!token) {
-              console.log('No token yet, UserSync will handle it');
-              return;
-            }
-            
-            const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/user/sync`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-              },
-            });
-            
-            if (response.ok) {
-              console.log('✅ User synced to Supabase');
-            }
-          } catch (syncError) {
-            console.log('Sync will be handled by UserSync component');
+  try {
+    setLoading(true);
+
+    // Start the sign-in process using the email and password provided
+    const signInAttempt = await signIn.create({
+      identifier: email,
+      password,
+    });
+
+    // If sign-in process is complete, set the created session as active
+    // and redirect the user
+    if (signInAttempt.status === "complete") {
+      await setActive({ session: signInAttempt.createdSessionId });
+
+      // ✅ WAIT for sync to complete BEFORE navigating
+      try {
+        let token = null;
+        let retries = 0;
+        const maxRetries = 5;
+        
+        // Retry getting token if not immediately available
+        while (!token && retries < maxRetries) {
+          token = await getToken();
+          if (!token) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+            retries++;
           }
-        }, 500);
+        }
+        
+        if (token) {
+          const response = await fetch(
+            `${process.env.EXPO_PUBLIC_API_URL}/api/user/sync`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
 
-        router.replace("/(tabs)");
-      } else {
-        // If the status is not complete, check why. User may need to
-        // complete further steps.
-        console.error(JSON.stringify(signInAttempt, null, 2));
-        Alert.alert("Login Failed", "Please complete additional steps.");
-      }     
-    }catch(err){
-      console.error(JSON.stringify(err, null, 2));
-      Alert.alert(
-        "Login Failed",
-        err.errors?.[0]?.message || "Invalid email or password"
-      );
-      
-    }finally{
-      setLoading(false);
+          if (response.ok) {
+            const data = await response.json();
+            console.log("✅ User synced to Supabase:", data);
+          } else {
+            const errorData = await response.json();
+            console.error("❌ Sync failed:", errorData);
+          }
+        } else {
+          console.log("⚠️ No token available after retries");
+        }
+      } catch (syncError) {
+        console.error("❌ Sync error:", syncError);
+      }
+
+      router.replace("/(tabs)");
+    } else {
+      // If the status is not complete, check why. User may need to
+      // complete further steps.
+      console.error("Login incomplete:", JSON.stringify(signInAttempt, null, 2));
+      Alert.alert("Login Failed", "Please complete additional steps.");
     }
-  };
+  } catch (err) {
+    console.error("Login Error:", JSON.stringify(err, null, 2));
 
+    // ✅ Better error handling
+    let errorMessage = "Invalid email or password";
+
+    if (err?.errors && Array.isArray(err.errors) && err.errors.length > 0) {
+      errorMessage = err.errors[0].message;
+    } else if (err?.message) {
+      errorMessage = err.message;
+    }
+
+    Alert.alert("Login Failed", errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleForgotPassword = () =>
-    router.push({ pathname: "/(auth)/forgot-password"});
+    router.push({ pathname: "/(auth)/forgot-password" });
 
- return  (
+  return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -238,7 +265,7 @@ export default function LoginScreen() {
   );
 }
 
-const  styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
