@@ -16,7 +16,7 @@ import AdminManagement from './components/AdminManagement';
 
 import  EventApplications from './pages/EventApplications';
 import EnhancedEventDetails from './pages/EnhancedEventDetails';
-
+import AdminLayout from './layouts/AdminLayout';
 
 function App() {
   return (
@@ -29,7 +29,9 @@ function App() {
         path="/dashboard"
         element={
           <ProtectedRoute allowedRoles={['editor','master']}>
+           
             <Dashboard />
+            
           </ProtectedRoute>
         }
       />
@@ -38,7 +40,7 @@ function App() {
       <Route
         path="/create-event"
         element={
-          <ProtectedRoute allowedRoles={['editor']}>
+          <ProtectedRoute allowedRoles={['editor','master']}>
             <CreateEvent />
           </ProtectedRoute>
         }
@@ -47,7 +49,7 @@ function App() {
       <Route
         path="/edit-event/:id"
         element={
-          <ProtectedRoute allowedRoles={['editor']}>
+          <ProtectedRoute allowedRoles={['editor','master']}>
             <CreateEvent />
           </ProtectedRoute>
         }
@@ -69,7 +71,7 @@ element={
 <Route
 path="/event-registrations"
 element={
-  <ProtectedRoute allowedRoles={['editor']}>
+  <ProtectedRoute allowedRoles={['editor','master']}>
     <EventRegistrations/>
   </ProtectedRoute>
 }
@@ -79,7 +81,7 @@ element={
 <Route
 path='/members'
 element={
-  <ProtectedRoute allowedRoles={['editor']}>
+  <ProtectedRoute allowedRoles={['editor','master']}>
     <Members/>
   </ProtectedRoute>
 }
@@ -89,7 +91,7 @@ element={
       <Route 
       path='/membership'
       element={
-        <ProtectedRoute allowedRoles={['editor']}>
+        <ProtectedRoute allowedRoles={['editor','master']}>
           <MembershipApproval/>
         </ProtectedRoute>
       }
@@ -100,7 +102,10 @@ element={
       path='/sendnotification'
       element={
         <ProtectedRoute allowedRoles={['editor','master']}>
+          <AdminLayout>
+
           <Notification/>
+          </AdminLayout>
         </ProtectedRoute>
       }
       /> 
@@ -130,7 +135,7 @@ element={
        <Route
        path='/event-applications'
        element={
-        <ProtectedRoute allowedRoles={['editor']}>
+        <ProtectedRoute allowedRoles={['editor','master']}>
           <EventApplications/>
         </ProtectedRoute>
        }
@@ -140,8 +145,11 @@ element={
       <Route
       path="/certificate-generator"
       element={
-       <ProtectedRoute allowedRoles={['editor']}>
+       <ProtectedRoute allowedRoles={['editor','master']}>
+        <AdminLayout>
+
        <CertificateGenerator/>
+        </AdminLayout>
        </ProtectedRoute>
 
       }
@@ -162,5 +170,5 @@ element={
   );
 }
 
-export default App;
+export default App; 
 

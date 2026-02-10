@@ -65,11 +65,11 @@ const Sidebar = () => {
     const navItems = [
         { name: 'Dashboard', path: '/dashboard' },
         { name: 'Events', path: '/event-management' },
-        { name: 'Event Applications', path: '/event-applications', role: 'editor' },
-        { name: 'Certificates', path: '/certificate-generator',role: 'editor' },
+        { name: 'Event Applications', path: '/event-applications' },
+        { name: 'Certificates', path: '/certificate-generator' },
         { name: 'Notifications', path: '/sendnotification' },
-        { name: 'Approvals', path: '/membership', role: 'editor'},
-        { name: 'Members', path: '/members',role: 'editor' },
+        { name: 'Approvals', path: '/membership'},
+        { name: 'Members', path: '/members' },
         {name:"Manage Admins", path:'/admin-management',role:'master' },
     ];
 

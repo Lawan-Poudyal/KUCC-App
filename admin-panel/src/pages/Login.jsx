@@ -7,27 +7,75 @@ function Login() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
+     const [loading, setLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
     const navigate = useNavigate()
 
     const handleLogin = async (e) => {
         e.preventDefault()
         setError('')
+        setLoading(true)
 
-         const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+        try {
+            // Step 1: Sign in with Supabase Auth
+            const { data: { session }, error: signInError } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
 
-    if (error) {
-      setError(error.message);
-      return;
-    }
+            if (signInError) {
+                throw signInError;
+            }
+             if (!session) {
+                throw new Error('Failed to create session');
+            }
+            
+console.log('Signed in user ID:', session.user.id);
+console.log('Signed in email:', session.user.email);
 
-    //  Supabase session created automatically
-    navigate("/dashboard");
-  };
 
+             // Step 2: Check if admin exists and is active
+            const { data: admin, error: adminError } = await supabase
+                .from('admins')
+                .select('role, is_active, full_name')
+                .eq('id', session.user.id)
+                .single();
+
+                 if (adminError) {
+                console.error('Admin fetch error:', adminError);
+                console.error('Error details:', JSON.stringify(adminError, null, 2));
+                console.error('Error code:', adminError.code);
+                console.error('Error message:', adminError.message);
+                console.error('Error hint:', adminError.hint);
+
+                await supabase.auth.signOut();
+                throw new Error('Admin account not found. Please contact support.');
+            }
+            // Step 3: Check if admin is active
+            if (!admin.is_active) {
+                await supabase.auth.signOut();
+                throw new Error('Your account has been deactivated. Please contact support.');
+            }
+            // Step 4: Verify role is valid
+            if (!['editor', 'master'].includes(admin.role)) {
+                await supabase.auth.signOut();
+                throw new Error('Invalid admin role. Please contact support.');
+            }
+             console.log('Login successful:', {
+                email: session.user.email,
+                role: admin.role,
+                name: admin.full_name
+            });
+// Step 5: Navigate to dashboard
+            // Supabase session is automatically stored and managed
+            navigate('/dashboard');
+            } catch (err) {
+            console.error('Login error:', err);
+            setError(err.message || 'Failed to login. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
     return (
         <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-gray-50 to-gray-100">
             {/* Decorative background elements */}
@@ -135,6 +183,7 @@ function Login() {
                                         setError('');
                                     }}
                                     required
+                                    disabled={loading}
                                     className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 transition-all"
                                     onFocus={(e) => e.target.style.borderColor = '#585F8A'}
                                     onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
@@ -143,6 +192,7 @@ function Login() {
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
                                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                    disabled={loading}
                                 >
                                     {showPassword ? (
                                         <svg className="w-5 h-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -190,10 +240,21 @@ function Login() {
                         {/* Login Button */}
                         <button
                             type="submit"
+                            disabled={loading}
                             className="w-full py-3 rounded-xl text-white font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
                             style={{ backgroundColor: '#585F8A' }}
                         >
-                            Sign In
+                            {loading ? (
+                                <>
+                                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Signing in...
+                                </>
+                            ) : (
+                                'Sign In'
+                            )}
                         </button>
                     </form>
                 </div>

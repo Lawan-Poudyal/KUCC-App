@@ -5,6 +5,7 @@ import {
   getAllAdmins,
   updateAdmin,
   createAdmin,
+  deleteAdmin,
 } from '../controllers/masterController.js';
 
 const router = express.Router();
@@ -42,4 +43,12 @@ router.post(
   requireAdmin(['master']),
   createAdmin
 );
+
+// delete admin permnently
+router.delete(
+  '/admins/:id',
+  requireAdmin(['master']),
+  deleteAdmin
+);
+
 export default router;
