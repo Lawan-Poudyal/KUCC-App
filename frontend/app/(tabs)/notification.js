@@ -1,24 +1,22 @@
 // app/(tabs)/notification.js
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  StyleSheet,
-  Text,
-  ScrollView,
-  View,
   ActivityIndicator,
   RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { getNotifications } from "../../services/notificationService.js";
 import { groupNotifications } from "../../utils/notificationUtils.js";
 
 
-
-
 export default function NotificationScreen() {
-  const [notifications, setNotifications] = useState({ 
-    today: [], 
-    weekly: [], 
-    older: [] 
+  const [notifications, setNotifications] = useState({
+    today: [],
+    weekly: [],
+    older: [],
   });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -36,7 +34,7 @@ export default function NotificationScreen() {
       const grouped = groupNotifications(data);
       setNotifications(grouped);
     } catch (err) {
-      console.error('Error fetching notifications:', err);
+      console.error("Error fetching notifications:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -50,17 +48,22 @@ export default function NotificationScreen() {
   };
 
   const renderNotification = (item) => (
-    <View key={item.id} style={[
-      styles.notificationCard,
-      { borderLeftColor: getPriorityColor(item.priority) }
-    ]}>
+    <View
+      key={item.id}
+      style={[
+        styles.notificationCard,
+        { borderLeftColor: getPriorityColor(item.priority) },
+      ]}
+    >
       <View style={styles.notificationHeader}>
         <Text style={styles.notificationTitle}>{item.title}</Text>
         {item.priority && (
-          <View style={[
-            styles.priorityBadge,
-            { backgroundColor: getPriorityColor(item.priority) }
-          ]}>
+          <View
+            style={[
+              styles.priorityBadge,
+              { backgroundColor: getPriorityColor(item.priority) },
+            ]}
+          >
             <Text style={styles.priorityText}>
               {item.priority.toUpperCase()}
             </Text>
@@ -76,14 +79,14 @@ export default function NotificationScreen() {
 
   const getPriorityColor = (priority) => {
     switch (priority?.toLowerCase()) {
-      case 'high':
-        return '#ff4444';
-      case 'medium':
-        return '#ffaa00';
-      case 'low':
-        return '#44ff44';
+      case "high":
+        return "#ff4444";
+      case "medium":
+        return "#ffaa00";
+      case "low":
+        return "#44ff44";
       default:
-        return '#cccccc';
+        return "#cccccc";
     }
   };
 
@@ -106,9 +109,10 @@ export default function NotificationScreen() {
     );
   }
 
-  const hasNotifications = notifications.today.length > 0 || 
-                          notifications.weekly.length > 0 || 
-                          notifications.older.length > 0;
+  const hasNotifications =
+    notifications.today.length > 0 ||
+    notifications.weekly.length > 0 ||
+    notifications.older.length > 0;
 
   if (!hasNotifications) {
     return (
@@ -119,6 +123,7 @@ export default function NotificationScreen() {
   }
 
   return (
+    // <SafeAreaView>
     <ScrollView
       style={styles.container}
       refreshControl={
@@ -146,18 +151,19 @@ export default function NotificationScreen() {
         </View>
       )}
     </ScrollView>
+    // </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   centerContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 16,
   },
   section: {
@@ -165,33 +171,33 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 12,
-    color: '#333',
+    color: "#333",
   },
   notificationCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     padding: 12,
     marginBottom: 8,
     borderRadius: 8,
     borderLeftWidth: 4,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
   },
   notificationHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 4,
   },
   notificationTitle: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 16,
     flex: 1,
-    color: '#333',
+    color: "#333",
   },
   priorityBadge: {
     paddingHorizontal: 8,
@@ -200,32 +206,30 @@ const styles = StyleSheet.create({
   },
   priorityText: {
     fontSize: 10,
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
   },
   notificationMessage: {
     marginTop: 4,
-    color: '#666',
+    color: "#666",
     lineHeight: 20,
   },
   notificationTime: {
     fontSize: 12,
-    color: '#999',
+    color: "#999",
     marginTop: 4,
   },
   errorText: {
-    color: 'red',
+    color: "red",
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   retryText: {
-    color: '#0000ff',
-    textDecorationLine: 'underline',
+    color: "#0000ff",
+    textDecorationLine: "underline",
   },
   emptyText: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
 });
-
-
