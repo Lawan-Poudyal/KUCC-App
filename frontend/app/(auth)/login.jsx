@@ -1,3 +1,4 @@
+import { useAuth, useClerk, useSignIn } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -15,15 +16,14 @@ import {
   View,
 } from "react-native";
 import * as Animatable from "react-native-animatable";
-import  { useSignIn,useAuth } from "@clerk/clerk-expo";
-
 
 const { width, height } = Dimensions.get("window");
 const logoSize = 100;
 
 export default function LoginScreen() {
-  const {signIn, setActive, isLoaded}=useSignIn();
-  const {getToken}=useAuth();
+  const { signIn, setActive, isLoaded } = useSignIn();
+  const { getToken } = useAuth();
+  const { signOut } = useClerk();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,7 +32,6 @@ export default function LoginScreen() {
   const [focusedInput, setFocusedInput] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
       Alert.alert(
@@ -41,9 +40,11 @@ export default function LoginScreen() {
       );
       return;
     }
-    if(!isLoaded) return;
+    if (!isLoaded) return;
 
-    try{
+    try {
+      await signOut();
+
       setLoading(true);
       // Start the sign-in process using the email and password provided
       const signInAttempt = await signIn.create({
@@ -55,29 +56,29 @@ export default function LoginScreen() {
       if (signInAttempt.status === "complete") {
         await setActive({ session: signInAttempt.createdSessionId });
 
-        setTimeout(async () => {
-          try {
-            const token = await getToken();
-            if (!token) {
-              console.log('No token yet, UserSync will handle it');
-              return;
-            }
-            
-            const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/user/sync`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-              },
-            });
-            
-            if (response.ok) {
-              console.log('✅ User synced to Supabase');
-            }
-          } catch (syncError) {
-            console.log('Sync will be handled by UserSync component');
-          }
-        }, 500);
+        // setTimeout(async () => {
+        //   try {
+        //     const token = await getToken();
+        //     if (!token) {
+        //       console.log('No token yet, UserSync will handle it');
+        //       return;
+        //     }
+
+        //     const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/user/sync`, {
+        //       method: 'POST',
+        //       headers: {
+        //         'Authorization': `Bearer ${token}`,
+        //         'Content-Type': 'application/json',
+        //       },
+        //     });
+
+        //     if (response.ok) {
+        //       console.log('✅ User synced to Supabase');
+        //     }
+        //   } catch (syncError) {
+        //     console.log('Sync will be handled by UserSync component');
+        //   }
+        // }, 500);
 
         router.replace("/(tabs)");
       } else {
@@ -85,24 +86,22 @@ export default function LoginScreen() {
         // complete further steps.
         console.error(JSON.stringify(signInAttempt, null, 2));
         Alert.alert("Login Failed", "Please complete additional steps.");
-      }     
-    }catch(err){
+      }
+    } catch (err) {
       console.error(JSON.stringify(err, null, 2));
       Alert.alert(
         "Login Failed",
-        err.errors?.[0]?.message || "Invalid email or password"
+        err.errors?.[0]?.message || "Invalid email or password",
       );
-      
-    }finally{
+    } finally {
       setLoading(false);
     }
   };
 
-
   const handleForgotPassword = () =>
-    router.push({ pathname: "/(auth)/forgot-password"});
+    router.push({ pathname: "/(auth)/forgot-password" });
 
- return  (
+  return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -238,7 +237,7 @@ export default function LoginScreen() {
   );
 }
 
-const  styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",

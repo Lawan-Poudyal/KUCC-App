@@ -1,37 +1,46 @@
-import { useEffect } from 'react';
-   import { useAuth } from '@clerk/clerk-expo';
+import { useAuth } from "@clerk/clerk-expo";
+import { useEffect, useRef } from "react";
 
-   export default function UserSync() {
-     const { isSignedIn, getToken } = useAuth();
+export default function UserSync() {
+  const { isSignedIn, isLoaded, getToken } = useAuth();
+  const hasSynced = useRef(false);
 
-     useEffect(() => {
-       const syncUser = async () => {
-         if (!isSignedIn) return;
+  useEffect(() => {
+    const syncUser = async () => {
+      if (!isLoaded || !isSignedIn || hasSynced.current) return;
 
-         try {
-           const token = await getToken();
-           
-           const response = await fetch(
-             `${process.env.EXPO_PUBLIC_API_URL}/api/user/sync`,
-             {
-               method: 'POST',
-               headers: {
-                 'Authorization': `Bearer ${token}`,
-                 'Content-Type': 'application/json',
-               },
-             }
-           );
+      try {
+        // const token = await getToken({ template: "default" });
+        const token = await getToken();
+        if (!token) return;
 
-           if (response.ok) {
-             console.log('✅ User auto-synced (safety net)');
-           }
-         } catch (error) {
-           console.error('Sync error:', error);
-         }
-       };
+        // Test API
+        // console.log("CLERK JWT:", token);
 
-       syncUser();
-     }, [isSignedIn, getToken]);
+        const res = await fetch(
+          `${process.env.EXPO_PUBLIC_API_URL}/api/user/sync`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
 
-     return null;
-   }
+        if (res.ok) {
+          hasSynced.current = true;
+          console.log("✅ User synced (global UserSync)");
+        } else {
+          console.log("❌ Sync failed:", await res.text());
+        }
+      } catch (err) {
+        console.error("Sync error:", err);
+      }
+    };
+
+    syncUser();
+  }, [isLoaded, isSignedIn]);
+
+  return null;
+}

@@ -1,3 +1,4 @@
+import { useAuth, useSignUp } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -15,15 +16,12 @@ import {
   View,
 } from "react-native";
 import * as Animatable from "react-native-animatable";
-import { useSignUp,useAuth } from "@clerk/clerk-expo"; 
-
-
 
 const { width, height } = Dimensions.get("window");
 const logoSize = 100;
 
 export default function SignUpScreen() {
-  const {isLoaded, signUp, setActive}=useSignUp();
+  const { isLoaded, signUp, setActive } = useSignUp();
   const { getToken } = useAuth();
 
   const [name, setName] = useState("");
@@ -31,24 +29,23 @@ export default function SignUpScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-const [focusedInput, setFocusedInput] = useState(null);
-const  [loading, setLoading] = useState(false);
-const [pendingVerification, setPendingVerification] = useState(false);
+  const [focusedInput, setFocusedInput] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [pendingVerification, setPendingVerification] = useState(false);
   const [code, setCode] = useState("");
 
-
- const handleSignUp = async () => {
+  const handleSignUp = async () => {
     if (!name || !phone || !email || !password) {
       Alert.alert("Missing Information", "Please fill all fields.");
       return;
     }
 
-    if(password.length < 8){
+    if (password.length < 8) {
       Alert.alert("Weak Password", "Password must be at least 8 characters.");
       return;
     }
 
-    if(!isLoaded) return;
+    if (!isLoaded) return;
 
     try {
       setLoading(true);
@@ -70,22 +67,23 @@ const [pendingVerification, setPendingVerification] = useState(false);
       setPendingVerification(true);
     } catch (err) {
       console.error(JSON.stringify(err, null, 2));
-      let errorMessage = err.errors?.[0]?.message || "An error occurred during signup";
-  
-  // Make password breach error more user-friendly
-  if (errorMessage.includes("found in an online data breach")) {
-    errorMessage = "This password has been compromised in a data breach. Please choose a stronger, unique password.";
-  }
-  
-  Alert.alert("Signup failed", errorMessage);
+      let errorMessage =
+        err.errors?.[0]?.message || "An error occurred during signup";
+
+      // Make password breach error more user-friendly
+      if (errorMessage.includes("found in an online data breach")) {
+        errorMessage =
+          "This password has been compromised in a data breach. Please choose a stronger, unique password.";
+      }
+
+      Alert.alert("Signup failed", errorMessage);
     } finally {
       setLoading(false);
     }
+  };
 
-};
-
-// handle submission of verification form
-const onVerifyPress = async () => {
+  // handle submission of verification form
+  const onVerifyPress = async () => {
     if (!isLoaded) return;
 
     try {
@@ -97,33 +95,33 @@ const onVerifyPress = async () => {
 
       if (signUpAttempt.status === "complete") {
         await setActive({ session: signUpAttempt.createdSessionId });
-        
+
         // ✅ BETTER: Let UserSync component handle it
         // Or wait briefly and use getToken
-        setTimeout(async () => {
-          try {
-            const token = await getToken();
-            if (!token) {
-              console.log('No token yet, UserSync will handle it');
-              return;
-            }
-            
-            const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/user/sync`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-              },
-            });
-            
-            if (response.ok) {
-              console.log('✅ New user synced to Supabase');
-            }
-          } catch (syncError) {
-            console.log('Sync will be handled by UserSync component');
-          }
-        }, 500);
-        
+        // setTimeout(async () => {
+        //   try {
+        //     const token = await getToken();
+        //     if (!token) {
+        //       console.log('No token yet, UserSync will handle it');
+        //       return;
+        //     }
+
+        //     const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/user/sync`, {
+        //       method: 'POST',
+        //       headers: {
+        //         'Authorization': `Bearer ${token}`,
+        //         'Content-Type': 'application/json',
+        //       },
+        //     });
+
+        //     if (response.ok) {
+        //       console.log('✅ New user synced to Supabase');
+        //     }
+        //   } catch (syncError) {
+        //     console.log('Sync will be handled by UserSync component');
+        //   }
+        // }, 500);
+
         Alert.alert("Success", "Account created successfully!");
         router.replace("/(tabs)");
       } else {
@@ -134,7 +132,7 @@ const onVerifyPress = async () => {
       console.error(JSON.stringify(err, null, 2));
       Alert.alert(
         "Verification Failed",
-        err.errors?.[0]?.message || "Invalid verification code"
+        err.errors?.[0]?.message || "Invalid verification code",
       );
     } finally {
       setLoading(false);
@@ -149,7 +147,9 @@ const onVerifyPress = async () => {
           style={{ flex: 1 }}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          <View style={{ flex: 1, justifyContent: "center", paddingHorizontal: 30 }}>
+          <View
+            style={{ flex: 1, justifyContent: "center", paddingHorizontal: 30 }}
+          >
             <Text style={styles.verifyTitle}>Verify your email</Text>
             <Text style={styles.verifyDescription}>
               A verification code has been sent to {email}
@@ -293,9 +293,7 @@ const onVerifyPress = async () => {
               onFocus={() => setFocusedInput("password")}
               onBlur={() => setFocusedInput(null)}
             />
-            <TouchableOpacity
-              onPress={() => setShowPassword(!showPassword)}
-            >
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
               <Ionicons
                 name={showPassword ? "eye-outline" : "eye-off-outline"}
                 size={18}
@@ -306,10 +304,10 @@ const onVerifyPress = async () => {
 
           {/* SIGNUP BUTTON */}
           <TouchableOpacity
-           style={[styles.button, loading && styles.buttonDisabled]} 
-           onPress={handleSignUp}
-           disabled={loading}
-           >
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={handleSignUp}
+            disabled={loading}
+          >
             <Text style={styles.buttonText}>
               {loading ? "CREATING ACCOUNT..." : "SIGN UP"}
             </Text>
@@ -318,15 +316,11 @@ const onVerifyPress = async () => {
 
         {/* ===== FOOTER ===== */}
         <View style={styles.footerBox}>
-         
-            <Text style={styles.footerTitle}>Already have an account?</Text>
-        
-          
+          <Text style={styles.footerTitle}>Already have an account?</Text>
+
           <TouchableOpacity onPress={() => router.replace("/(auth)/login")}>
-                    <Text style={styles.footerSubtitle}>
-                     login here
-                    </Text>
-                    </TouchableOpacity>
+            <Text style={styles.footerSubtitle}>login here</Text>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -396,7 +390,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
 
-  buttonDisabled:{
+  buttonDisabled: {
     opacity: 0.6,
   },
 
@@ -405,25 +399,24 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     letterSpacing: 1,
   },
- 
+
   footerBox: {
-  backgroundColor: "#5B5F8D",
-  borderTopLeftRadius: 24,
-  borderTopRightRadius: 24,
-  paddingVertical: 35,
-  alignItems: "center",
-},
-footerSubtitle: {
-  color: "#FFFFFF",
-  fontSize: 12,
-  marginBottom: 14,
-  textDecorationLine: "underline",
-},
+    backgroundColor: "#5B5F8D",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingVertical: 35,
+    alignItems: "center",
+  },
+  footerSubtitle: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    marginBottom: 14,
+    textDecorationLine: "underline",
+  },
 
   footerTitle: {
     color: "#FFFFFF",
     fontSize: 13,
-   
   },
   verifyTitle: {
     fontSize: 24,
@@ -439,5 +432,4 @@ footerSubtitle: {
     marginBottom: 30,
     textAlign: "center",
   },
-
 });
