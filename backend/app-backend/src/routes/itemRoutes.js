@@ -1,6 +1,6 @@
+import { requireAuth } from "@clerk/express";
 import express from "express";
 import { createNewItem, getItems } from "../controllers/itemController.js";
-import { requireAuth } from "../middleware/auth.js";
 
 const router = express.Router();
 

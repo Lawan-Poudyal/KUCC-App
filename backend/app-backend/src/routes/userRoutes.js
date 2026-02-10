@@ -1,22 +1,16 @@
+import { requireAuth } from "@clerk/express";
 import express from "express";
 import { getProfile, syncUser } from "../controllers/userController.js";
-import { requireAuth } from "../middleware/auth.js";
 
 const router = express.Router();
 
 //desc get current user profile
 //GET /api/user/profile
-router.get("/profile", requireAuth(), (req, res) => {
-  req.auth = requireAuth()(req, res, () => {}); // attach userId
-  getProfile(req, res);
-});
+router.get("/profile", requireAuth(), getProfile);
 
-//desc get current user profile
-//GET /api/user/profile
+//desc sync current user to db
+//POST /api/user/sync
 
-router.post("/sync", requireAuth(), (req, res) => {
-  req.auth = requireAuth()(req, res, () => {});
-  syncUser(req, res);
-});
+router.post("/sync", requireAuth(), syncUser);
 
 export default router;
