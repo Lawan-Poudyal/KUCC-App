@@ -2,7 +2,9 @@ import cors from "cors";
 import express from "express";
 import logger from "./middleware/logger.js";
 import eventRoutes from "./routes/eventRoutes.js";
+import itemRoutes from "./routes/itemRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 const app = express();
 app.use(cors());
