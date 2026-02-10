@@ -25,76 +25,92 @@ export default function ForgotPasswordScreen() {
   const [loading, setLoading] = useState(false);
 
   // Request a password reset code
-  const onRequestReset = async () => {
-    if (!email.trim()) {
-      Alert.alert("Missing Email", "Please enter your email address.");
-      return;
+const onRequestReset = async () => {
+  if (!email.trim()) {
+    Alert.alert("Missing Email", "Please enter your email address.");
+    return;
+  }
+
+  if (!isLoaded || !signIn) {
+    Alert.alert("Error", "Authentication service is not ready. Please try again.");
+    return;
+  }
+
+  try {
+    setLoading(true);
+    await signIn.create({
+      strategy: "reset_password_email_code",
+      identifier: email,
+    });
+
+    setSuccessfulCreation(true);
+    Alert.alert(
+      "Code Sent",
+      "A password reset code has been sent to your email."
+    );
+  } catch (err) {
+    console.error("Reset request error:", JSON.stringify(err, null, 2));
+    
+    let errorMessage = "Failed to send reset code";
+    if (err?.errors && Array.isArray(err.errors) && err.errors.length > 0) {
+      errorMessage = err.errors[0].message;
+    } else if (err?.message) {
+      errorMessage = err.message;
     }
+    
+    Alert.alert("Error", errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
 
-    if (!isLoaded) return;
+// Reset the password with the code and new password
+const onReset = async () => {
+  if (!code.trim() || !password.trim()) {
+    Alert.alert("Missing Information", "Please enter code and new password.");
+    return;
+  }
 
-    try {
-      setLoading(true);
-      await signIn.create({
-        strategy: "reset_password_email_code",
-        identifier: email,
-      });
+  if (password.length < 8) {
+    Alert.alert("Weak Password", "Password must be at least 8 characters.");
+    return;
+  }
 
-      setSuccessfulCreation(true);
-      Alert.alert(
-        "Code Sent",
-        "A password reset code has been sent to your email."
-      );
-    } catch (err) {
-      console.error(JSON.stringify(err, null, 2));
-      Alert.alert(
-        "Error",
-        err.errors?.[0]?.message || "Failed to send reset code"
-      );
-    } finally {
-      setLoading(false);
+  if (!isLoaded || !signIn) {
+    Alert.alert("Error", "Authentication service is not ready. Please try again.");
+    return;
+  }
+
+  try {
+    setLoading(true);
+    const result = await signIn.attemptFirstFactor({
+      strategy: "reset_password_email_code",
+      code,
+      password,
+    });
+
+    if (result.status === "complete") {
+      Alert.alert("Success", "Password has been reset successfully!");
+      router.replace("/(auth)/login");
+    } else {
+      Alert.alert("Error", "Unable to reset password. Please try again.");
     }
-  };
-
-  // Reset the password with the code and new password
-  const onReset = async () => {
-    if (!code.trim() || !password.trim()) {
-      Alert.alert("Missing Information", "Please enter code and new password.");
-      return;
+  } catch (err) {
+    console.error("Reset error:", JSON.stringify(err, null, 2));
+    
+    let errorMessage = "Invalid code or password";
+    if (err?.errors && Array.isArray(err.errors) && err.errors.length > 0) {
+      errorMessage = err.errors[0].message;
+    } else if (err?.message) {
+      errorMessage = err.message;
     }
-
-    if (password.length < 8) {
-      Alert.alert("Weak Password", "Password must be at least 8 characters.");
-      return;
-    }
-
-    if (!isLoaded) return;
-
-    try {
-      setLoading(true);
-      const result = await signIn.attemptFirstFactor({
-        strategy: "reset_password_email_code",
-        code,
-        password,
-      });
-
-      if (result.status === "complete") {
-        Alert.alert("Success", "Password has been reset successfully!");
-        router.replace("/(auth)/login");
-      } else {
-        Alert.alert("Error", "Unable to reset password. Please try again.");
-      }
-    } catch (err) {
-      console.error(JSON.stringify(err, null, 2));
-      Alert.alert(
-        "Reset Failed",
-        err.errors?.[0]?.message || "Invalid code or password"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
+    
+    Alert.alert("Reset Failed", errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
+ 
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
