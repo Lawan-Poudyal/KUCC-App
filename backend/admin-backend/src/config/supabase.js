@@ -12,7 +12,30 @@ export const supabase = createClient(
   {
     auth: {
       autoRefreshToken: false,
-      persistSession: false
-    }
+      persistSession: false,
+       detectSessionInUrl: false
+    },
+     global: {
+      headers: {
+        'x-application-name': 'kucc-admin-backend'
+      },
+       fetch: (url, options = {}) => {
+        // Custom fetch with 30-second timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+          console.error('[SUPABASE] Request timeout after 30s:', url);
+          controller.abort();
+        }, 30000);
+
+        return fetch(url, {
+          ...options,
+          signal: controller.signal,
+        }).finally(() => {
+          clearTimeout(timeoutId);
+        });
+      },
+    },
   }
 );
+// Test connection on startup
+console.log('🔗 Supabase client initialized');

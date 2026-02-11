@@ -160,7 +160,10 @@ element={
       path='/admin-management'
       element={
         <ProtectedRoute allowedRoles={['master']}>
+          <AdminLayout>
+
           <AdminManagement/>
+          </AdminLayout>
         </ProtectedRoute>
       }
       />

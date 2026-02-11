@@ -10,35 +10,95 @@ const getAuthToken=async () => {
 };
 
 // issue certificates (Admin Only)
-export const issueCertificates=async (certificateData) => {
-    try {
-        const token=await getAuthToken();
 
-        if(!token){
-            throw new Error('Not authenticated.Please login.');
+export const issueCertificates = async (certificateData) => {
+    try {
+        const token = await getAuthToken();
+
+        if (!token) {
+            throw new Error('Not authenticated. Please login.');
         }
 
-        const response=await fetch(`${API_BASE_URL}/certificates/issue`,{
-            method:'POST',
-            headers:{
-                'Content-Type':'application/json',
-                'Authorization':`Bearer ${token}`
+        const response = await fetch(`${API_BASE_URL}/certificates/issue`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             },
-            credentials:'include',
-            body:JSON.stringify(certificateData)
+            credentials: 'include',
+            body: JSON.stringify(certificateData)
         });
 
-        if(!response.ok){
-            const error=await response.json();
-            throw new Error(error.error || 'Failed to issue certificate');
+        // Check content type before parsing
+        const contentType = response.headers.get('content-type');
+        
+        if (!response.ok) {
+            let errorMessage = 'Failed to issue certificate';
+            
+            if (contentType && contentType.includes('application/json')) {
+                const error = await response.json();
+                errorMessage = error.error || error.message || errorMessage;
+            } else {
+                // Server returned HTML or other non-JSON response
+                const text = await response.text();
+                console.error('Server error response:', text);
+                errorMessage = `Server error (${response.status}). Check console for details.`;
+            }
+            
+            throw new Error(errorMessage);
         }
+
         return await response.json();
     } catch (error) {
-        console.error('Error issuing certificate:',error);
+        console.error('Error issuing certificate:', error);
         throw error;
-        
     }   
 };
+
+// Get certificates by registration ID
+export const getCertificatesByRegistration = async (registrationId) => {
+  try {
+    const token = await getAuthToken();
+
+    if (!token) {
+      throw new Error('Not authenticated. Please login.');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/certificates/by-registration/${registrationId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch certificates');
+    }
+
+    const data = await response.json();
+    return data.certificates || [];
+  } catch (error) {
+    console.error('Error fetching certificates by registration:', error);
+    throw error;
+  }
+};
+
+// Download certificate
+export const downloadCertificate = (certificateId) => {
+  const downloadUrl = `${API_BASE_URL}/certificates/download/${certificateId}`;
+  
+  // Open in new window to trigger download
+  window.open(downloadUrl, '_blank');
+};
+
+// Get certificate download URL
+export const getCertificateDownloadUrl = (certificateId) => {
+  return `${API_BASE_URL}/certificates/download/${certificateId}`;
+};
+
+
 
 // get all certificates (Admin only)
 export const getAllCertificates=async () => {
@@ -184,6 +244,7 @@ export const getEventRegistrations=async (eventId) => {
         payment_status,
         applied_at,
          user_email,
+         user_name,
         event_title
       `)
       .eq('event_id',eventId)

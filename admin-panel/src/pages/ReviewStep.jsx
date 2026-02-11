@@ -1,28 +1,20 @@
 import React from 'react'
 
-const allRecipients = [
-  { id: 1, name: "Tilashmi Dahal", email: "tilashmi@ku.edu.np" },
-  { id: 2, name: "Ayush Paudel", email: "ayush@ku.edu.np" },
-  { id: 3, name: "Lawan Paudel", email: "lawan@ku.edu.np" },
-  { id: 4, name: "Kretee Shakya", email: "kretee@ku.edu.np" },
-];
 
-
-const ReviewStep = ({onBack,onNext,formData}) => {
+const ReviewStep = ({onBack,onNext,formData,recipients=[]}) => {
  
     // extract values from formData
-    const eventName=formData.selectedEvent?.name || 'No Event Selected';
+    const eventName=formData.selectedEvent?.name || formData.selectedEvent?.title || 'No Event Selected';
     const certificateType= formData.certificateType?.name || 'No Type Selected';
-    const recipients= formData.selectedRecipients || [];
+    const selectedRecipientIds= formData.selectedRecipients || [];
 
-    // Map recipient IDs or objects to names
-  const recipientNames = recipients
-    .map((r) => {
-      if (typeof r === 'number') return allRecipients.find(a => a.id === r)?.name;
-      if (typeof r === 'object') return r.name;
-      return null;
-    })
-    .filter(Boolean)
+    // Map registration IDs to actual recipient data 
+const  selectedRecipientsList = recipients.filter(r => 
+    selectedRecipientIds.includes(r.id)
+  );
+
+  const recipientNames = selectedRecipientsList
+    .map(r => r.name)
     .join(', ');
     
    
@@ -94,7 +86,7 @@ const ReviewStep = ({onBack,onNext,formData}) => {
                     <div className='bg-white rounded-3xl p-6 text-center'>
                         <p className='text-sm text-gray-600 mb-2'>Recipients</p>
                         <h3 className='text-lg font-bold text-gray-900 mb-1'>
-                            {recipients.length} Member{recipients.length !== 1 ? 's': ''}
+                            {selectedRecipientIds.length} Member{selectedRecipientIds.length !== 1 ? 's': ''}
                         </h3>
                         <p className='text-base font-bold text-gray-900'>
                             {recipientNames || 'No Recipients Selected'}

@@ -10,19 +10,19 @@ const RecipientSelection = ({formData, setFormData,onNext,onBack,recipients = []
  
 const selectedRecipients= formData.selectedRecipients || [];
 
-  const toggleRecipient = (id) => {
+  const toggleRecipient = (registrationId) => {
    setFormData((prev)=> ({
     ...prev,
-    selectedRecipients: prev.selectedRecipients.includes(id)
-    ? prev.selectedRecipients.filter((rid)=> rid !== id)
-    : [...prev.selectedRecipients, id],
+    selectedRecipients: prev.selectedRecipients.includes(registrationId)
+    ? prev.selectedRecipients.filter((rid)=> rid !== registrationId)
+    : [...prev.selectedRecipients, registrationId],
    }));
   };
 
   const selectAll = () => {
    setFormData((prev)=> ({
     ...prev,
-    selectedRecipients: recipients.map((r)=> r.id),
+    selectedRecipients: recipients.map((r)=> r.id),// r.id is registration
    }));
   };
 

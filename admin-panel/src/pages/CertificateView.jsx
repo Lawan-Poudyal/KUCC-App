@@ -1,41 +1,80 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react';
+import { downloadCertificate, getCertificatesByRegistration } from '../services/certificateService.js';
 
 
-const allRecipients = [
-  { id: 1, name: "Tilashmi Dahal", email: "tilashmi@ku.edu.np" },
-  { id: 2, name: "Ayush Paudel", email: "ayush@ku.edu.np" },
-  { id: 3, name: "Lawan Paudel", email: "lawan@ku.edu.np" },
-  { id: 4, name: "Kretee Shakya", email: "kretee@ku.edu.np" },
-];
+const CertificateView = ({formData, recipients=[]}) => {
 
+    const [certificates, setCertificates]=useState([]);
+    const [loading,setLoading]=useState(true);
+    const [error, setError]=useState(null);
 
-
-// reusable button component
-const CertificateButton=({onClick,icon,label})=>(
-    <button
-    onClick={onClick}
-    className='flex items-center justify-center gap-2 border-2 border-gray-300 rounded-xl px-6 py-3 hover:bg-gray-50 transition-colors'
-    >{icon}
-    <span className='text-sm font-medium text-gray-700'>{label}</span>
-    </button>
-);
-
-const CertificateView = ({formData}) => {
-
-    const firstRecipientId = formData.selectedRecipients[0];
-    const recipient = allRecipients.find(r => r.id === firstRecipientId);
+    //  Get the first selected recipient from the recipients array
+    const selectedRecipientIds = formData.selectedRecipients || [];
+    const firstRecipientId = selectedRecipientIds[0];
+    const recipient = recipients.find(r => r.id === firstRecipientId);
     
-    // use formData from props
+
+    //certificate data fro preview
     const certificateData={
         organization :'KATHMANDU UNIVERSITY COMPUTER CLUB',
         certificateType: formData.certificateType?.name || 'CERTIFICATE OF PARTICIPATION',
        recipientName: recipient?.name || 'Recipient Name',
-        eventName: formData.selectedEvent?.name || 'Event Name',
-        eventDate: formData.selectedEvent?.date || 'Event Date',
+        eventName: formData.selectedEvent?.name ||  formData.selectedEvent?.title || 'Event Name',
+        eventDate: formData.selectedEvent?.date || formData.selectedEvent?.event_date || 'Event Date',
         eventCoordinator:'Event Coordinator',
         president: 'KUCC President',
         certificateId: 'CERT-2025-GIT-03'
     };
+
+    useEffect(()=>{
+        fetchCertificates();
+    },[]);
+
+    const fetchCertificates=async () => {
+        try{
+            setLoading(true);
+            setError(null);
+
+            // fetch certificates for all selected recipients
+            const certPromises=formData.selectedRecipients.map(regId =>
+                getCertificatesByRegistration(regId)
+            );
+
+            const certResults= await Promise.allSettled(certPromises);
+
+            // Flatten and filter successful results
+      const allCerts = certResults
+        .filter(r => r.status === 'fulfilled' && r.value && r.value.length > 0)
+        .flatMap(r => r.value);
+
+      setCertificates(allCerts);
+
+        }catch(err){
+          console.error('Error fetching certificates:', err);
+      setError('Failed to load certificates: ' + err.message);  
+        }finally{
+            setLoading(false);
+        }
+    };
+
+    const handleDownload=(certificateId, certificateNumber)=>{
+        try {
+            downloadCertificate(certificateId);
+        } catch (err) {
+            console.error('Download error:',err);
+            alert('Failed to download certificate. Please try again.');
+            
+        }
+    };
+
+    const handleDownloadAll = () => {
+    certificates.forEach((cert, index) => {
+      setTimeout(() => {
+        handleDownload(cert.id, cert.certificate_number);
+      }, index * 500); // Stagger downloads by 500ms
+    });
+  };
+
 
     
 
@@ -121,6 +160,89 @@ const CertificateView = ({formData}) => {
             </div>
         </div>
 
+        {/* Download Section */}
+        <div className="bg-white rounded-3xl p-8 shadow-lg">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold">Generated Certificates</h3>
+            {certificates.length > 1 && (
+              <button
+                onClick={handleDownloadAll}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download All
+              </button>
+            )}
+          </div>
+
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading certificates...</p>
+            </div>
+          ) : error ? (
+            <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+              {error}
+            </div>
+          ) : certificates.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              No certificates found. They may still be generating.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {certificates.map((cert, index) => {
+                const recipientData = recipients.find(r => r.id === cert.registration_id);
+
+                return (
+                  <div
+                    key={cert.id}
+                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow flex items-center justify-between"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                          <span className="text-indigo-600 font-semibold">
+                            {index + 1}
+                          </span>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900">
+                            {recipientData?.name || 'Unknown'}
+                          </h4>
+                          <p className="text-sm text-gray-500">
+                            {recipientData?.email || ''}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="ml-13 text-sm text-gray-600">
+                        <p>
+                          <span className="font-medium">Certificate #:</span>{' '}
+                          {cert.certificate_number}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="ml-4">
+                      <button
+                        onClick={() => handleDownload(cert.id, cert.certificate_number)}
+                        className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Download PDF
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+
+
          {/* Certificate Information */}
 <div className="bg-white rounded-3xl p-8 shadow-lg">
   <h3 className="text-lg font-semibold mb-4">Certificate Information</h3>
@@ -129,7 +251,7 @@ const CertificateView = ({formData}) => {
     <div>
       <p className="text-gray-500">Event</p>
       <p className="font-medium">
-        {formData.selectedEvent?.name}
+        {formData.selectedEvent?.name || formData.selectedEvent?.title}
       </p>
     </div>
 
@@ -156,8 +278,15 @@ const CertificateView = ({formData}) => {
   </div>
 </div>
 
-
-      
+{/* Actions */}
+        <div className="flex gap-4">
+          <button
+            onClick={() => window.location.reload()}
+            className="flex-1 bg-gray-200 text-gray-800 py-3 px-6 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+          >
+            Generate More Certificates
+          </button>
+        </div>
     </div>
    </div>
   );
