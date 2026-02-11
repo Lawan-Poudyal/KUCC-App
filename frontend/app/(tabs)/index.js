@@ -1,21 +1,28 @@
 import { useUser } from "@clerk/clerk-expo";
-import { Text, View, StyleSheet } from "react-native";
+import { useRouter } from "expo-router";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function Home() {
   const { user } = useUser();
+  const router = useRouter();
 
   return (
     <View style={styles.container}>
       <Text style={styles.welcome}>Welcome to KUCC App!</Text>
       {user && (
         <>
-          <Text style={styles.info}>Email: {user.primaryEmailAddress?.emailAddress}</Text>
+          <Text style={styles.info}>
+            Email: {user.primaryEmailAddress?.emailAddress}
+          </Text>
           <Text style={styles.info}>
             Name: {user.unsafeMetadata?.name || "Not provided"}
           </Text>
           <Text style={styles.info}>
             Phone: {user.unsafeMetadata?.phone || "Not provided"}
           </Text>
+          <TouchableOpacity onPress={() => router.push("/events")}>
+            <Text style={styles.viewAll}>View All →</Text>
+          </TouchableOpacity>
         </>
       )}
     </View>
