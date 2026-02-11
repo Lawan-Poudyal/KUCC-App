@@ -16,7 +16,7 @@ export default function UserSync() {
 
         // Test API
         // console.log("CLERK JWT:", token);
-
+        // console.log("HIIIIII:    ", process.env.EXPO_PUBLIC_API_URL);
         const res = await fetch(
           `${process.env.EXPO_PUBLIC_API_URL}/api/user/sync`,
           {
@@ -27,10 +27,10 @@ export default function UserSync() {
             },
           },
         );
-
+        // console.log("fetchinggggg");
         if (res.ok) {
           hasSynced.current = true;
-          console.log("✅ User synced (global UserSync)");
+          console.log("✅ User synced ");
         } else {
           console.log("❌ Sync failed:", await res.text());
         }
