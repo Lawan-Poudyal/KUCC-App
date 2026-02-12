@@ -1,3 +1,4 @@
+// app-backend/src/app.js
 import { clerkMiddleware } from "@clerk/express";
 import cors from "cors";
 import express from "express";
