@@ -1,3 +1,5 @@
+// app-backend/src/middleware/authMiddleware.js
+
 import { verifyToken } from "@clerk/clerk-sdk-node";
 import { supabase } from "../config/supabase.js";
 
