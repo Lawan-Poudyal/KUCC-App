@@ -23,6 +23,9 @@ export default function Home() {
           <TouchableOpacity onPress={() => router.push("/events")}>
             <Text style={styles.viewAll}>View All →</Text>
           </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push("/membership")}>
+            <Text style={styles.viewAll}>Join KUCC →</Text>
+          </TouchableOpacity>
         </>
       )}
     </View>
