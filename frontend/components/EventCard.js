@@ -1,65 +1,48 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+// frontend/components/EventCard.js
+
 import { useRouter } from "expo-router";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function EventCard({ event }) {
   const router = useRouter();
-  const isEnded = event.status === "ENDED";
+
+  const isPast = event.status === "completed";
 
   return (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() =>
+        router.push({
+          pathname: `/events/${event.id}`,
+        })
+      }
+      activeOpacity={0.8}
+    >
       {/* LEFT */}
       <View style={styles.left}>
         <Text style={styles.eventTitle}>{event.title}</Text>
-        <Text style={styles.eventInfo}>📅 {event.date}</Text>
 
-        {event.time && (
-          <Text style={styles.eventInfo}>⏰ {event.time}</Text>
-        )}
+        <Text style={styles.eventInfo}>📅 {event.event_date}</Text>
 
-        {event.location && (
-          <Text style={styles.eventInfo}>📍 {event.location}</Text>
-        )}
+        <Text style={styles.eventInfo}>⏰ {event.event_time}</Text>
 
-        <Text style={styles.eventInfo}>👥 {event.participants}</Text>
+        <Text style={styles.eventInfo}>📍 {event.location}</Text>
+
+        <Text style={styles.eventInfo}>👥 Max: {event.max_participants}</Text>
       </View>
 
       {/* RIGHT */}
       <View style={styles.right}>
-        <Text style={isEnded ? styles.statusEnded : styles.statusOpen}>
-          {event.status}
+        <Text style={isPast ? styles.statusEnded : styles.statusOpen}>
+          {isPast ? "Past" : "Upcoming"}
         </Text>
 
-        {isEnded ? (
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() =>
-              router.push({
-                pathname: "/certificates",
-                params: event,
-              })
-            }
-          >
-            <Text style={styles.secondaryButtonText}>
-              View Certificate
-            </Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() =>
-              router.push({
-                pathname: "/register",
-                params: event,
-              })
-            }
-          >
-            <Text style={styles.secondaryButtonText}>Register</Text>
-          </TouchableOpacity>
-        )}
+        <Text style={styles.detailsText}>View Details</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
+
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#FFFFFF",
@@ -69,6 +52,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     elevation: 2,
+  },
+
+  detailsText: {
+    marginTop: 12,
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#3C3F8F",
   },
 
   left: {
