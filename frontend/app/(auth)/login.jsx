@@ -6,19 +6,20 @@ import {
   Alert,
   Dimensions,
   Image,
-  KeyboardAvoidingView,
-  Platform,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import * as Animatable from "react-native-animatable";
+import logo from '../../assets/kucc-logo.png';
 
 const { width, height } = Dimensions.get("window");
-const logoSize = 100;
+// const logoSize = 100;
+const logoSize = Math.min(width * 0.25, 100);
 
 export default function LoginScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
@@ -103,137 +104,144 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
+      {/* <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        {/* ================= TOP ================= */}
-        <View>
-          <View style={styles.welcomeCard}>
-            <Text style={styles.welcomeText}>Hello</Text>
-            <Text style={styles.welcomeText}>Welcome Back!</Text>
-          </View>
+        // behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      > */}
 
-          <Animatable.View
-            animation="fadeInDown"
-            duration={900}
-            style={styles.logoWrapper}
-          >
-            <Image
-              source={{
-                uri: "https://www.bing.com/th/id/OIP.-MHxVaRWUStiVS8nNk_tuAHaGB",
-              }}
-              style={{ width: logoSize, height: logoSize }}
-              resizeMode="contain"
-            />
-          </Animatable.View>
+      {/* ================= TOP ================= */}
+      <View>
+        <View style={styles.welcomeCard}>
+          <Text style={styles.welcomeText}>Hello</Text>
+          <Text style={styles.welcomeText}>Welcome Back!</Text>
         </View>
 
-        {/* ================= MIDDLE ================= */}
-        <View style={styles.middle}>
-          <View style={styles.form}>
-            {/* EMAIL */}
-            <Text style={styles.label}>Email</Text>
-            <View
-              style={[
-                styles.inputBox,
-                focusedInput === "email" && styles.inputFocused,
-              ]}
-            >
-              <Ionicons name="mail-outline" size={18} color="#383F78" />
-              <TextInput
-                style={styles.textInput}
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                onFocus={() => setFocusedInput("email")}
-                onBlur={() => setFocusedInput(null)}
-                autoCapitalize="none"
-                keyboardType="email-address"
-              />
-            </View>
+        <Animatable.View
+          animation="fadeInDown"
+          duration={900}
+          style={styles.logoWrapper}
+        >
+          <Image
+            source={logo}
+            style={{ width: logoSize, height: logoSize }}
+            resizeMode="contain"
+          />
+        </Animatable.View>
+      </View>
 
-            {/* PASSWORD */}
-            <Text style={styles.label}>Password</Text>
-            <View
-              style={[
-                styles.inputBox,
-                focusedInput === "password" && styles.inputFocused,
-              ]}
-            >
-              <Ionicons name="lock-closed-outline" size={18} color="#383F78" />
+      {/* ================= MIDDLE ================= */}
+      {/* <View style={styles.middle}> */}
+      <ScrollView
+        style={styles.middle}
+        contentContainerStyle={styles.middleContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.form}>
+          {/* EMAIL */}
+          <Text style={styles.label}>Email</Text>
+          <View
+            style={[
+              styles.inputBox,
+              focusedInput === "email" && styles.inputFocused,
+            ]}
+          >
+            <Ionicons name="mail-outline" size={18} color="#383F78" />
+            <TextInput
+              style={styles.textInput}
+              placeholder="Email"
+              value={email}
+              onChangeText={setEmail}
+              onFocus={() => setFocusedInput("email")}
+              onBlur={() => setFocusedInput(null)}
+              autoCapitalize="none"
+              keyboardType="email-address"
+            />
+          </View>
 
-              <TextInput
-                style={styles.textInput}
-                placeholder="Password"
-                placeholderTextColor="#999"
-                secureTextEntry={!showPassword}
-                value={password}
-                onChangeText={setPassword}
-                onFocus={() => setFocusedInput("password")}
-                onBlur={() => setFocusedInput(null)}
-              />
+          {/* PASSWORD */}
+          <Text style={styles.label}>Password</Text>
+          <View
+            style={[
+              styles.inputBox,
+              focusedInput === "password" && styles.inputFocused,
+            ]}
+          >
+            <Ionicons name="lock-closed-outline" size={18} color="#383F78" />
 
-              <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-                activeOpacity={0.6}
-              >
-                <Ionicons
-                  name={showPassword ? "eye-outline" : "eye-off-outline"}
-                  size={18}
-                  color="#999"
-                />
-              </TouchableOpacity>
-            </View>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Password"
+              placeholderTextColor="#999"
+              secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={setPassword}
+              onFocus={() => setFocusedInput("password")}
+              onBlur={() => setFocusedInput(null)}
+            />
 
-            {/* REMEMBER + FORGET */}
-            <View style={styles.row}>
-              <TouchableOpacity
-                style={styles.rememberRow}
-                activeOpacity={0.7}
-                onPress={() => setRememberMe(!rememberMe)}
-              >
-                <View
-                  style={[
-                    styles.checkbox,
-                    rememberMe && styles.checkboxChecked,
-                  ]}
-                >
-                  {rememberMe && (
-                    <Ionicons name="checkmark" size={10} color="#fff" />
-                  )}
-                </View>
-                <Text style={styles.rememberText}>Remember password</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity onPress={handleForgotPassword}>
-                <Text style={styles.forgotTextRed}>Forget password?</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* LOGIN BUTTON */}
             <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleLogin}
-              disabled={loading}
+              onPress={() => setShowPassword(!showPassword)}
+              activeOpacity={0.6}
             >
-              <Text style={styles.buttonText}>
-                {loading ? "LOGGING IN..." : "LOGIN"}
-              </Text>
+              <Ionicons
+                name={showPassword ? "eye-outline" : "eye-off-outline"}
+                size={18}
+                color="#999"
+              />
             </TouchableOpacity>
           </View>
-        </View>
 
-        {/* ================= FOOTER ================= */}
-        <View style={styles.footerBox}>
-          <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
-            <Text style={styles.footerTitle}>Don`t have an account?</Text>
+          {/* REMEMBER + FORGET */}
+          <View style={styles.row}>
+            <TouchableOpacity
+              style={styles.rememberRow}
+              activeOpacity={0.7}
+              onPress={() => setRememberMe(!rememberMe)}
+            >
+              <View
+                style={[
+                  styles.checkbox,
+                  rememberMe && styles.checkboxChecked,
+                ]}
+              >
+                {rememberMe && (
+                  <Ionicons name="checkmark" size={10} color="#fff" />
+                )}
+              </View>
+              <Text style={styles.rememberText}>Remember password</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={handleForgotPassword}>
+              <Text style={styles.forgotTextRed}>Forget password?</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* LOGIN BUTTON */}
+          <TouchableOpacity
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            <Text style={styles.buttonText}>
+              {loading ? "LOGGING IN..." : "LOGIN"}
+            </Text>
           </TouchableOpacity>
-
-          <Text style={styles.footerSubtitle}>Sign up to get started</Text>
         </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        {/* </View> */}
+      </ScrollView>
+
+      {/* ================= FOOTER ================= */}
+      <View style={styles.footerBox}>
+        <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
+          <Text style={styles.footerTitle}>Don`t have an account?</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.footerSubtitle}>Sign up to get started</Text>
+      </View>
+    </SafeAreaView >
   );
 }
 
@@ -261,11 +269,22 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
+  // middle: {
+  //   flex: 1,
+  //   justifyContent: "center",
+  //   paddingHorizontal: 30,
+  //   transform: [{ translateY: -30 }],
+  // },
+
   middle: {
     flex: 1,
-    justifyContent: "center",
     paddingHorizontal: 30,
-    transform: [{ translateY: -30 }],
+  },
+
+  middleContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingBottom: 20,
   },
 
   form: {

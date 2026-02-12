@@ -6,19 +6,20 @@ import {
   Alert,
   Dimensions,
   Image,
-  KeyboardAvoidingView,
-  Platform,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import * as Animatable from "react-native-animatable";
+import logo from '../../assets/kucc-logo.png';
 
 const { width, height } = Dimensions.get("window");
-const logoSize = 100;
+// const logoSize = 100;
+const logoSize = Math.min(width * 0.25, 100);
 
 export default function SignUpScreen() {
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -143,187 +144,195 @@ export default function SignUpScreen() {
   if (pendingVerification) {
     return (
       <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView
+        {/* <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          // behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        > */}
+        <View
+          style={{ flex: 1, justifyContent: "center", paddingHorizontal: 30 }}
         >
-          <View
-            style={{ flex: 1, justifyContent: "center", paddingHorizontal: 30 }}
-          >
-            <Text style={styles.verifyTitle}>Verify your email</Text>
-            <Text style={styles.verifyDescription}>
-              A verification code has been sent to {email}
-            </Text>
+          <Text style={styles.verifyTitle}>Verify your email</Text>
+          <Text style={styles.verifyDescription}>
+            A verification code has been sent to {email}
+          </Text>
 
-            <View style={styles.inputBox}>
-              <Ionicons name="mail-outline" size={18} color="#383F78" />
-              <TextInput
-                style={styles.textInput}
-                value={code}
-                placeholder="Enter verification code"
-                placeholderTextColor="#999"
-                onChangeText={setCode}
-                keyboardType="numeric"
-              />
-            </View>
-
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={onVerifyPress}
-              disabled={loading}
-            >
-              <Text style={styles.buttonText}>
-                {loading ? "VERIFYING..." : "VERIFY"}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={{ marginTop: 20, alignSelf: "center" }}
-              onPress={() => setPendingVerification(false)}
-            >
-              <Text style={{ color: "#5B5F8D" }}>Go back</Text>
-            </TouchableOpacity>
+          <View style={styles.inputBox}>
+            <Ionicons name="mail-outline" size={18} color="#383F78" />
+            <TextInput
+              style={styles.textInput}
+              value={code}
+              placeholder="Enter verification code"
+              placeholderTextColor="#999"
+              onChangeText={setCode}
+              keyboardType="numeric"
+            />
           </View>
-        </KeyboardAvoidingView>
+
+          <TouchableOpacity
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={onVerifyPress}
+            disabled={loading}
+          >
+            <Text style={styles.buttonText}>
+              {loading ? "VERIFYING..." : "VERIFY"}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={{ marginTop: 20, alignSelf: "center" }}
+            onPress={() => setPendingVerification(false)}
+          >
+            <Text style={{ color: "#5B5F8D" }}>Go back</Text>
+          </TouchableOpacity>
+        </View>
+
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
+      {/* <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        // behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      > */}
+      {/* ===== TOP ===== */}
+      <View>
+        <View style={styles.welcomeCard}>
+          <Text style={styles.welcomeText}>Hello</Text>
+          <Text style={styles.welcomeText}>Create your account!</Text>
+        </View>
+
+        <Animatable.View
+          animation="fadeInDown"
+          duration={900}
+          style={styles.logoWrapper}
+        >
+          <Image
+            source={logo}
+            style={{ width: logoSize, height: logoSize }}
+            resizeMode="contain"
+          />
+        </Animatable.View>
+      </View>
+
+      {/* ===== FORM ===== */}
+      {/* <View style={styles.middle}> */}
+      <ScrollView
+        style={styles.middle}
+        contentContainerStyle={styles.middleContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        {/* ===== TOP ===== */}
-        <View>
-          <View style={styles.welcomeCard}>
-            <Text style={styles.welcomeText}>Hello</Text>
-            <Text style={styles.welcomeText}>Create your account!</Text>
-          </View>
-
-          <Animatable.View
-            animation="fadeInDown"
-            duration={900}
-            style={styles.logoWrapper}
-          >
-            <Image
-              source={{
-                uri: "https://www.bing.com/th/id/OIP.-MHxVaRWUStiVS8nNk_tuAHaGB",
-              }}
-              style={{ width: logoSize, height: logoSize }}
-              resizeMode="contain"
-            />
-          </Animatable.View>
+        {/* NAME */}
+        <View
+          style={[
+            styles.inputBox,
+            focusedInput === "name" && styles.inputFocused,
+          ]}
+        >
+          <Ionicons name="person-outline" size={18} color="#383F78" />
+          <TextInput
+            style={styles.textInput}
+            placeholder=" Full Name"
+            value={name}
+            onChangeText={setName}
+            onFocus={() => setFocusedInput("name")}
+            onBlur={() => setFocusedInput(null)}
+          />
         </View>
 
-        {/* ===== FORM ===== */}
-        <View style={styles.middle}>
-          {/* NAME */}
-          <View
-            style={[
-              styles.inputBox,
-              focusedInput === "name" && styles.inputFocused,
-            ]}
-          >
-            <Ionicons name="person-outline" size={18} color="#383F78" />
-            <TextInput
-              style={styles.textInput}
-              placeholder=" Full Name"
-              value={name}
-              onChangeText={setName}
-              onFocus={() => setFocusedInput("name")}
-              onBlur={() => setFocusedInput(null)}
-            />
-          </View>
+        {/* PHONE */}
+        <View
+          style={[
+            styles.inputBox,
+            focusedInput === "phone" && styles.inputFocused,
+          ]}
+        >
+          <Ionicons name="call-outline" size={18} color="#383F78" />
+          <TextInput
+            style={styles.textInput}
+            placeholder="Phone Number"
+            keyboardType="phone-pad"
+            value={phone}
+            onChangeText={setPhone}
+            onFocus={() => setFocusedInput("phone")}
+            onBlur={() => setFocusedInput(null)}
+          />
+        </View>
 
-          {/* PHONE */}
-          <View
-            style={[
-              styles.inputBox,
-              focusedInput === "phone" && styles.inputFocused,
-            ]}
-          >
-            <Ionicons name="call-outline" size={18} color="#383F78" />
-            <TextInput
-              style={styles.textInput}
-              placeholder="Phone Number"
-              keyboardType="phone-pad"
-              value={phone}
-              onChangeText={setPhone}
-              onFocus={() => setFocusedInput("phone")}
-              onBlur={() => setFocusedInput(null)}
-            />
-          </View>
+        {/* EMAIL */}
+        <View
+          style={[
+            styles.inputBox,
+            focusedInput === "email" && styles.inputFocused,
+          ]}
+        >
+          <Ionicons name="mail-outline" size={18} color="#383F78" />
+          <TextInput
+            style={styles.textInput}
+            placeholder="Email Address"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+            onFocus={() => setFocusedInput("email")}
+            onBlur={() => setFocusedInput(null)}
+          />
+        </View>
 
-          {/* EMAIL */}
-          <View
-            style={[
-              styles.inputBox,
-              focusedInput === "email" && styles.inputFocused,
-            ]}
-          >
-            <Ionicons name="mail-outline" size={18} color="#383F78" />
-            <TextInput
-              style={styles.textInput}
-              placeholder="Email Address"
-              autoCapitalize="none"
-              keyboardType="email-address"
-              value={email}
-              onChangeText={setEmail}
-              onFocus={() => setFocusedInput("email")}
-              onBlur={() => setFocusedInput(null)}
+        {/* PASSWORD */}
+        <View
+          style={[
+            styles.inputBox,
+            focusedInput === "password" && styles.inputFocused,
+          ]}
+        >
+          <Ionicons name="lock-closed-outline" size={18} color="#383F78" />
+          <TextInput
+            style={styles.textInput}
+            placeholder="Password (min 8 characters)"
+            secureTextEntry={!showPassword}
+            value={password}
+            onChangeText={setPassword}
+            onFocus={() => setFocusedInput("password")}
+            onBlur={() => setFocusedInput(null)}
+          />
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+            <Ionicons
+              name={showPassword ? "eye-outline" : "eye-off-outline"}
+              size={18}
+              color="#999"
             />
-          </View>
-
-          {/* PASSWORD */}
-          <View
-            style={[
-              styles.inputBox,
-              focusedInput === "password" && styles.inputFocused,
-            ]}
-          >
-            <Ionicons name="lock-closed-outline" size={18} color="#383F78" />
-            <TextInput
-              style={styles.textInput}
-              placeholder="Password (min 8 characters)"
-              secureTextEntry={!showPassword}
-              value={password}
-              onChangeText={setPassword}
-              onFocus={() => setFocusedInput("password")}
-              onBlur={() => setFocusedInput(null)}
-            />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Ionicons
-                name={showPassword ? "eye-outline" : "eye-off-outline"}
-                size={18}
-                color="#999"
-              />
-            </TouchableOpacity>
-          </View>
-
-          {/* SIGNUP BUTTON */}
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleSignUp}
-            disabled={loading}
-          >
-            <Text style={styles.buttonText}>
-              {loading ? "CREATING ACCOUNT..." : "SIGN UP"}
-            </Text>
           </TouchableOpacity>
         </View>
 
-        {/* ===== FOOTER ===== */}
-        <View style={styles.footerBox}>
-          <Text style={styles.footerTitle}>Already have an account?</Text>
+        {/* SIGNUP BUTTON */}
+        <TouchableOpacity
+          style={[styles.button, loading && styles.buttonDisabled]}
+          onPress={handleSignUp}
+          disabled={loading}
+        >
+          <Text style={styles.buttonText}>
+            {loading ? "CREATING ACCOUNT..." : "SIGN UP"}
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
 
-          <TouchableOpacity onPress={() => router.replace("/(auth)/login")}>
-            <Text style={styles.footerSubtitle}>login here</Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      {/* ===== FOOTER ===== */}
+      <View style={styles.footerBox}>
+        <Text style={styles.footerTitle}>Already have an account?</Text>
+
+        <TouchableOpacity onPress={() => router.replace("/(auth)/login")}>
+          <Text style={styles.footerSubtitle}>login here</Text>
+        </TouchableOpacity>
+      </View>
+
+    </SafeAreaView >
   );
 }
 
@@ -354,8 +363,14 @@ const styles = StyleSheet.create({
   middle: {
     flex: 1,
     paddingHorizontal: 30,
+    // justifyContent: "center",
+    // transform: [{ translateY: -32 }],
+  },
+
+  middleContent: {
+    flexGrow: 1,
     justifyContent: "center",
-    transform: [{ translateY: -32 }],
+    paddingBottom: 20,
   },
 
   inputBox: {
