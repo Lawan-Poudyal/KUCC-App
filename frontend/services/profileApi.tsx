@@ -1,72 +1,64 @@
-import { supabase } from "../lib/supabase";
+// frontend/services/profileApi.tsx
 
-const getToken = async () => {
-  const { data } = await supabase.auth.getSession();
-  return data.session?.access_token ?? "";
-};
+export const getProfileApi = async (token) => {
+  try {
+    const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/profile`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
 
-// export const getProfile = async () => {
-//   // get logged-in user
-//   const {
-//     data: { user },
-//     error: userError,
-//   } = await supabase.auth.getUser();
+    const data = await res.json();
 
-//   if (userError || !user) throw userError || new Error("No user");
+    if (!res.ok) throw new Error(data.message);
 
-//   // fetch profile
-//   const { data, error } = await supabase
-//     .from("profile")
-//     .select("*")
-//     .eq("id", user.id)
-//     .single();
-
-//   if (error) throw error;
-
-//   // generate public image URL if exists
-//   let profileImageUrl = null;
-//   if (data.img_path) {
-//     const { data: img } = supabase.storage
-//       .from("profile_photo")
-//       .getPublicUrl(data.img_path);
-
-//     profileImageUrl = img.publicUrl;
-//   }
-
-//   return {
-//     ...data,
-//     profileImage: profileImageUrl,
-//   };
-// };
-
-// GET profile from backend
-export const getProfile = async () => {
-  const token = await getToken();
-
-  const res = await fetch("http://localhost:8000/api/profile", {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error || "Failed to fetch profile");
+    return data;
+  } catch (err) {
+    // console.error("Get profile error:", err);
+    throw err;
   }
-
-  return res.json();
 };
 
-export const updateProfileApi = async (data: any) => {
-  const res = await fetch("http://localhost:8000/api/profile", {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${await getToken()}`, // get token from supabase auth
-    },
-    body: JSON.stringify(data),
-  });
-  return res.json();
+export const updateProfileApi = async (token, profileData, image) => {
+  try {
+    const formData = new FormData();
+    Object.keys(profileData).forEach((key) => {
+      if (profileData[key] !== undefined && profileData[key] !== null) {
+        formData.append(key, profileData[key]);
+      }
+    });
+
+    // console.log(profileData);
+    // console.log(formData);
+
+    if (image) {
+      formData.append("image", {
+        uri: image.uri,
+        name: image.fileName || "profile.jpg",
+        type: image.mimeType || "image/jpeg",
+      });
+    }
+
+    const res = await fetch(
+      `${process.env.EXPO_PUBLIC_API_URL}/api/profile/update`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      },
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.message);
+
+    return data;
+  } catch (err) {
+    console.error("Update profile error:", err);
+    throw err;
+  }
 };
