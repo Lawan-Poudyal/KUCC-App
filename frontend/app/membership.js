@@ -127,7 +127,7 @@ export default function Membership() {
           {
             text: "View KUCC ID",
             onPress: () => {
-              router.replace("/edit");
+              router.replace("/id-card");
             },
           },
         ]);
