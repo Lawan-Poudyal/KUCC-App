@@ -1,172 +1,248 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+// frontend/app/membership.js
+
+import { useAuth } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import ScreenWrapper from "../components/ScreenWrapper";
+import {
+  becomeMemberApi,
+  checkMembershipStatusApi,
+} from "../services/membershipApi";
+import { getProfileApi, updateProfileApi } from "../services/profileApi";
 
 export default function Membership() {
   const router = useRouter();
+  const { getToken } = useAuth();
 
-  // Form fields
-  const [firstName, setFirstName] = useState("");
-  const [middleName, setMiddleName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState(null);
 
-  const departments = ["CE", "CS", "BIT"];
-  const batches = ["2025", "2024", "2023", "2022", "2021"];
-
-  const [department, setDepartment] = useState(null);
-  const [batch, setBatch] = useState(null);
-
-  // Load draft on mount
   useEffect(() => {
-    AsyncStorage.getItem("kucc_membership_draft").then(res => {
-      if (res) {
-        const data = JSON.parse(res);
-        setFirstName(data.firstName || "");
-        setMiddleName(data.middleName || "");
-        setLastName(data.lastName || "");
-        setEmail(data.email || "");
-        setDepartment(data.department || null);
-        setBatch(data.batch || null);
+    const loadProfile = async () => {
+      try {
+        const token = await getToken();
+        const data = await getProfileApi(token);
+
+        if (!data.is_profile_complete) {
+          Alert.alert(
+            "Complete your Profile",
+            "Please complete your profile first.",
+            [
+              {
+                text: "Cancel",
+                style: "cancel",
+                onPress: () => {
+                  router.back(); // go back
+                },
+              },
+              {
+                text: "Okay",
+                onPress: () => {
+                  router.replace("/edit");
+                },
+              },
+            ],
+          );
+        }
+
+        setProfile(data);
+      } catch (err) {
+        console.log("PROFILE ERROR:", err.message);
+
+        if (err.message === "Profile not found") {
+          Alert.alert(
+            "Complete your Profile",
+            "Please complete your profile first.",
+            [
+              {
+                text: "Cancel",
+                style: "cancel",
+                onPress: () => {
+                  router.back(); // go back
+                },
+              },
+              {
+                text: "Okay",
+                onPress: () => {
+                  router.replace("/edit");
+                },
+              },
+            ],
+          );
+        }
+      } finally {
+        setLoading(false);
       }
-    });
+    };
+
+    loadProfile();
   }, []);
 
-  // Save draft on changes
-  useEffect(() => {
-    const saveDraft = async () => {
-      await AsyncStorage.setItem(
-        "kucc_membership_draft",
-        JSON.stringify({ firstName, middleName, lastName, email, department, batch })
-      );
-    };
-    saveDraft();
-  }, [firstName, middleName, lastName, email, department, batch]);
+  const handleRegistration = async () => {
+    try {
+      const token = await getToken();
 
-  // Start Khalti Payment
-  const startPayment = () => {
-    if (!firstName || !lastName || !email || !department || !batch) {
-      Alert.alert("Error", "Please fill all required fields");
-      return;
+      const data = await becomeMemberApi(token);
+
+      Alert.alert("Success", data.message);
+
+      // optional refresh profile
+    } catch (err) {
+      Alert.alert("Error", err.message);
     }
-
-    router.push({
-      pathname: "/khalti",
-      params: {
-        amount: 1, // Rs 1 for sandbox
-        name: firstName + " " + lastName,
-        email,
-        department,
-        batch
-      }
-    });
   };
 
+  const checkMembershipStatus = async () => {
+    try {
+      const token = await getToken();
+      const data = await checkMembershipStatusApi(token);
+
+      if (data.status === "approved") {
+        try {
+          const updatedProfile = { ...profile, is_member: true };
+          setProfile(updatedProfile); // update local state
+
+          // console.log("profile: ", updatedProfile);
+          const data = updateProfileApi(token, updatedProfile);
+          console.log("Profile also Updated!");
+        } catch (error) {
+          console.log("Error: ", error.message);
+        }
+        Alert.alert("Approved", `🎉 You're a Member of KUCC!`, [
+          {
+            text: "Cancel",
+            style: "cancel",
+            onPress: () => {
+              router.back(); // go back
+            },
+          },
+          {
+            text: "View KUCC ID",
+            onPress: () => {
+              router.replace("/edit");
+            },
+          },
+        ]);
+      } else if (data.status === "pending") {
+        Alert.alert("Status", data.message);
+      } else {
+        Alert.alert("Status", data.message);
+      }
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+  if (loading) return null;
+
   return (
-    <ScrollView style={styles.container}
-    contentContainerStyle={{ paddingTop: 30}}>
-      <Text style={styles.title}>KUCC Membership</Text>
+    <ScreenWrapper backgroundColor="#2F346E" statusBarStyle="light">
+      <ScrollView style={styles.container}>
+        <Text style={styles.title}>
+          Join Kathmandu University Computer Club
+        </Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="First Name *"
-        value={firstName}
-        onChangeText={setFirstName}
-      />
+        <Text style={styles.sectionTitle}>Why Join KUCC?</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Middle Name"
-        value={middleName}
-        onChangeText={setMiddleName}
-      />
+        <View style={styles.benefitBox}>
+          <Text style={styles.benefit}>
+            🚀 Access to tech workshops & bootcamps
+          </Text>
+          <Text style={styles.benefit}>
+            💡 Participate in hackathons & competitions
+          </Text>
+          <Text style={styles.benefit}>🤝 Network with tech enthusiasts</Text>
+          <Text style={styles.benefit}>
+            🎓 Industry mentorship & career guidance
+          </Text>
+          <Text style={styles.benefit}>🏆 Priority access to club events</Text>
+          <Text style={styles.benefit}>📜 Official KUCC Membership ID</Text>
+        </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Last Name *"
-        value={lastName}
-        onChangeText={setLastName}
-      />
+        <View style={styles.feeBox}>
+          <Text style={styles.feeText}>Membership Fee (One time Fee)</Text>
+          <Text style={styles.amount}>NRs. 1 </Text>
+        </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Email *"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
+        <TouchableOpacity style={styles.button} onPress={handleRegistration}>
+          <Text style={styles.buttonText}>Join Now</Text>
+        </TouchableOpacity>
 
-      <Text style={styles.label}>Department *</Text>
-      <View style={styles.row}>
-        {departments.map(d => (
-          <TouchableOpacity
-            key={d}
-            onPress={() => setDepartment(d)}
-            style={[styles.option, department === d && styles.optionActive]}
-          >
-            <Text style={{ color: department === d ? "#FFF" : "#000" }}>{d}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <Text style={styles.label}>Batch *</Text>
-      <View style={styles.row}>
-        {batches.map(b => (
-          <TouchableOpacity
-            key={b}
-            onPress={() => setBatch(b)}
-            style={[styles.option, batch === b && styles.optionActive]}
-          >
-            <Text style={{ color: batch === b ? "#FFF" : "#000" }}>{b}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <View style={styles.feeBox}>
-        <Text style={styles.feeText}>Membership Fee</Text>
-        <Text style={styles.amount}>NRs. 1 (Sandbox)</Text>
-      </View>
-
-      <TouchableOpacity style={styles.payButton} onPress={startPayment}>
-        <Text style={styles.payText}>Pay with Khalti</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <TouchableOpacity style={styles.button} onPress={checkMembershipStatus}>
+          <Text style={styles.buttonText}>Check Membership Status</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#E6E6E6", padding: 20 },
-  title: { fontSize: 22, fontWeight: "700", marginBottom: 20 },
-  input: {
-    backgroundColor: "#FFF",
-    borderRadius: 15,
-    padding: 14,
-    marginBottom: 12
+  container: {
+    flex: 1,
+    backgroundColor: "#E6E6E6",
+    padding: 20,
   },
-  label: { fontWeight: "600", marginTop: 10, marginBottom: 6 },
-  row: { flexDirection: "row", gap: 10 },
-  option: {
-    backgroundColor: "#FFF",
-    padding: 12,
-    borderRadius: 12
+  centerContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 30,
   },
-  optionActive: {
-    backgroundColor: "#3C3F8F",
+  title: {
+    fontSize: 22,
+    fontWeight: "700",
+    marginBottom: 15,
+    textAlign: "center",
   },
-  feeBox: {
-    marginVertical: 25,
+  subtitle: {
+    textAlign: "center",
+    marginBottom: 25,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 10,
+  },
+  benefitBox: {
     backgroundColor: "#FFF",
     padding: 20,
     borderRadius: 20,
-    alignItems: "center"
+    marginBottom: 25,
   },
-  amount: { fontSize: 22, fontWeight: "700", marginTop: 5 },
-  payButton: {
+  benefit: {
+    marginBottom: 10,
+  },
+  feeBox: {
+    backgroundColor: "#FFF",
+    padding: 20,
+    borderRadius: 20,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  feeText: {
+    fontWeight: "600",
+  },
+  amount: {
+    fontSize: 22,
+    fontWeight: "700",
+    marginTop: 5,
+  },
+  button: {
     backgroundColor: "#3C3F8F",
     padding: 16,
     borderRadius: 25,
-    alignItems: "center"
+    alignItems: "center",
+    marginBottom: 10,
   },
-  payText: { color: "#FFF", fontWeight: "700" },
+  buttonText: {
+    color: "#FFF",
+    fontWeight: "700",
+  },
 });
