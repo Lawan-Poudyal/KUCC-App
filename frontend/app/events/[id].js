@@ -1,18 +1,19 @@
 // frontend/app/events/[id].js
-
 import { useAuth, useUser } from "@clerk/clerk-expo";
+import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import ScreenWrapper from "../../components/ScreenWrapper";
 import { fetchEventById, registerForEvent } from "../../services/eventsApi";
 
 export default function EventDetails() {
@@ -21,6 +22,7 @@ export default function EventDetails() {
   const [showPaymentOptions, setShowPaymentOptions] = useState(false);
   const { user } = useUser();
   const { getToken } = useAuth();
+  const [registering, setRegistering] = useState(false);
 
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -40,32 +42,55 @@ export default function EventDetails() {
     if (id) loadEvent();
   }, [id]);
 
-  const handleFreeRegistration = async () => {
+  // const handleFreeRegistration = async () => {
+  //   Alert.alert("Confirm Registration", "Do you want to register?", [
+  //     { text: "Cancel", style: "cancel" },
+  //     {
+  //       text: "Yes",
+  //       onPress: async () => {
+  //         try {
+  //           const token = await getToken();
+  //           await registerForEvent(event.id, null, token);
+  //           Alert.alert("Success", "Registered successfully!");
+  //         } catch (err) {
+  //           Alert.alert("Opps!", err.message);
+  //         }
+  //       },
+  //     },
+  //   ]);
+  // };
+
+  // const handlePaidRegistration = async (method) => {
+  //   try {
+  //     const token = await getToken();
+  //     await registerForEvent(event.id, method, token);
+  //     Alert.alert("Success", "Registered successfully!");
+  //   } catch (err) {
+  //     Alert.alert("Opps!", err.message);
+  //   }
+  // };
+
+  const handleRegistration = async () => {
     Alert.alert("Confirm Registration", "Do you want to register?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Yes",
         onPress: async () => {
           try {
+            setRegistering(true); // show registering state
             const token = await getToken();
-            await registerForEvent(event.id, null, token);
-            Alert.alert("Success", "Registered successfully!");
+
+            await registerForEvent(event.id, "Cash", token);
+
+            setRegistering(false); // done registering
+            Alert.alert("Success", "🎉 Registered successfully!");
           } catch (err) {
-            Alert.alert("Error", err.message);
+            setRegistering(false);
+            Alert.alert("Oops!", err.message);
           }
         },
       },
     ]);
-  };
-
-  const handlePaidRegistration = async (method) => {
-    try {
-      const token = await getToken();
-      await registerForEvent(event.id, method, token);
-      Alert.alert("Success", "Registered successfully!");
-    } catch (err) {
-      Alert.alert("Error", err.message);
-    }
   };
 
   if (loading) {
@@ -77,86 +102,73 @@ export default function EventDetails() {
   }
 
   return (
-    //     <View style={styles.container}>
-    //   {/* HEADER */}
-    //   <View style={styles.header}>
-    //     <TouchableOpacity onPress={() => router.back()}>
-    //       <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-    //     </TouchableOpacity>
-    //     <Text style={styles.headerTitle}>Events</Text>
-    //     <View style={{ width: 24 }} />
-    //   </View>
-
-    <ScrollView style={styles.container}>
-      <Image source={{ uri: event.banner_url }} style={styles.banner} />
-
-      <View style={styles.content}>
-        <Text style={styles.title}>{event.title}</Text>
-
-        <Text style={styles.meta}>
-          📅 {event.event_date} • ⏰ {event.event_time}
-        </Text>
-
-        <Text style={styles.meta}>📍 {event.location}</Text>
-
-        <Text style={styles.meta}>💰 {event.registration_fee}</Text>
-
-        <Text style={styles.sectionTitle}>Description</Text>
-        <Text style={styles.description}>{event.description}</Text>
-
-        {/* <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Register</Text>
-        </TouchableOpacity> */}
-        {event.status === "completed" ? (
-          <Text style={{ color: "red", marginTop: 20 }}>
-            Registration closed
-          </Text>
-        ) : !event.is_paid ? (
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => handleFreeRegistration()}
-          >
-            <Text style={styles.buttonText}>Register</Text>
+    <ScreenWrapper backgroundColor="#2F346E" statusBarStyle="light">
+      <View style={{ flex: 1, backgroundColor: "#F2F2F2" }}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-        ) : (
-          <>
-            {!showPaymentOptions ? (
-              <TouchableOpacity
-                style={styles.button}
-                onPress={() => setShowPaymentOptions(true)}
-              >
-                <Text style={styles.buttonText}>Register</Text>
-              </TouchableOpacity>
-            ) : (
-              <>
-                <TouchableOpacity
-                  style={styles.button}
-                  onPress={() => handlePaidRegistration("Online")}
-                >
-                  <Text style={styles.buttonText}>Pay Online</Text>
-                </TouchableOpacity>
+          <Text style={styles.headerTitle}> {event.title} </Text>
+          <View style={{ width: 24 }} />
+        </View>
 
-                <TouchableOpacity
-                  style={[styles.button, { backgroundColor: "#888" }]}
-                  onPress={() => handlePaidRegistration("Cash")}
-                >
-                  <Text style={styles.buttonText}>Pay Cash</Text>
-                </TouchableOpacity>
-              </>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.content}>
+            <Text style={styles.sectionTitle}>Description</Text>
+            <Text style={styles.description}>{event.description}</Text>
+
+            <Text style={styles.meta}>
+              📅 {event.event_date} • ⏰ {event.event_time}
+            </Text>
+
+            <Text style={styles.meta}>📍 {event.location}</Text>
+
+            <Text style={styles.meta}>💰 {event.payment_amount}</Text>
+
+            {event.banner_url && (
+              <View style={styles.bannerContainer}>
+                <Image
+                  source={{ uri: event.banner_url }}
+                  style={styles.bannerImage}
+                  resizeMode="contain" // ensures entire image is visible
+                />
+              </View>
             )}
-          </>
-        )}
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleRegistration}
+              disabled={registering || event.status === "completed"}
+            >
+              <Text style={styles.buttonText}>
+                {registering
+                  ? "Registering..."
+                  : event.status === "completed"
+                    ? "Registration Closed"
+                    : "Register"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       </View>
-    </ScrollView>
+    </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F2F2F2",
+  },
+
   header: {
     backgroundColor: "#2F346E",
-    paddingTop: 50,
     paddingBottom: 20,
     paddingHorizontal: 20,
+    paddingTop: 15, // small internal spacing only
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -211,5 +223,19 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#FFF",
     fontWeight: "600",
+  },
+
+  bannerContainer: {
+    width: "100%",
+    height: 250, // adjust depending on your preferred height
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
+    marginBottom: 20,
+  },
+
+  bannerImage: {
+    width: "100%",
+    height: "100%",
   },
 });
