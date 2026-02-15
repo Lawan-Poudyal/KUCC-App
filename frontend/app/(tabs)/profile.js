@@ -102,7 +102,7 @@ export default function Profile() {
     },
     { title: "View KUCC ID Card", icon: "card-outline", route: "/id-card" },
 
-    { title: "Achievements", icon: "trophy-outline", route: "/achievements" },
+    // { title: "Achievements", icon: "trophy-outline", route: "/achievements" },
     { title: "Sign Out", icon: "log-out-outline" },
   ];
 
