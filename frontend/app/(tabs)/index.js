@@ -1,180 +1,144 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+// frontend/app/(tabs)/index.js
+import { useAuth, useUser } from "@clerk/clerk-expo";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
-  Dimensions,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-
-const { width } = Dimensions.get("window");
-
+import EventCard from "../../components/EventCard"; // make sure this is imported
+import ScreenWrapper from "../../components/ScreenWrapper";
+import { fetchEvents } from "../../services/eventsApi";
+import { getProfileApi } from "../../services/profileApi";
 export default function Homepage() {
+  const { user } = useUser();
+  const { getToken } = useAuth();
   const router = useRouter();
-  const { success } = useLocalSearchParams();
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Dummy event data (single source of truth)
-  const ongoingEvents = [
-    {
-      id: "techfest-2025",
-      title: "Annual Tech Fest 2025",
-      date: "December 15–17, 2025",
-      time: "9:00 AM – 6:00 PM",
-      location: "Main Auditorium, KU Campus",
-      participants: "250+ participants expected",
-      status: "OPEN",
-    },
-    {
-      id: "hackfest-2025",
-      title: "KU Hackfest",
-      date: "Nov 5, 2025",
-      time: "11:00 AM",
-      location: "Multipurpose Hall",
-      participants: "200+ participants",
-      status: "ENDED",
-    },
-  ];
+  const [profile, setProfile] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    program: "",
+    semester: "",
+    batch: "",
+    isProfileComplete: false,
+    isMember: false,
+  });
 
-  const upcomingEvent = {
-    id: "opensource-2025",
-    title: "Open Source Contribution",
-    date: "Dec 5, 2025",
-    time: "2:00 PM",
-    location: "Conference Hall",
-    participants: "30 seats left",
+  const loadData = async () => {
+    try {
+      const eventsData = await fetchEvents();
+      if (eventsData) {
+        const filtered = eventsData.filter((event) => event.status !== "draft");
+        setEvents(filtered);
+      }
+
+      const token = await getToken();
+      const profileData = await getProfileApi(token);
+
+      if (!profileData.is_profile_complete) {
+        router.replace("/edit");
+        return;
+      }
+
+      setProfile({
+        name: profileData.name || "",
+        email: profileData.email || "",
+        phone: profileData.phone || "",
+        program: profileData.program || "",
+        semester: profileData.semester || "",
+        batch: profileData.batch || "",
+        isProfileComplete: profileData.is_profile_complete || false,
+        isMember: profileData.is_member || false,
+      });
+    } catch (err) {
+      console.log(err);
+    }
   };
 
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  };
+  const upcomingEvent = events
+    .filter((event) => event.status === "active")
+    .slice(0, 3);
+
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        {success && (
-          <Text style={{ fontSize: 12, fontWeight: "500", color: "#383F78" }}>
-            {success}
+    <ScreenWrapper statusBarStyle="light" backgroundColor="#2F346E">
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.greeting}>
+            Welcome, {user?.unsafeMetadata?.name}
           </Text>
-        )}
-      </View>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.greeting}>Welcome,</Text>
-        <Text style={styles.subGreeting}>Lets start exploring</Text>
-
-        <TextInput
-          placeholder="Search anything"
-          placeholderTextColor="#9E9E9E"
-          style={styles.search}
-        />
-      </View>
-
-      {/* Ongoing Events */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Ongoing Events</Text>
-          <TouchableOpacity onPress={() => router.push("/events")}>
-            <Text style={styles.viewAll}>View All →</Text>
-          </TouchableOpacity>
+          <Text style={styles.subGreeting}>Lets start exploring</Text>
         </View>
-        {ongoingEvents.map((event) => (
-          <View key={event.id} style={styles.eventCard}>
-            {event.status === "OPEN" && (
-              <Text style={styles.badge}>Featured</Text>
-            )}
-
-            <Text style={styles.eventTitle}>{event.title}</Text>
-            <Text style={styles.eventInfo}>📅 {event.date}</Text>
-
-            {event.time && (
-              <Text style={styles.eventInfo}>⏰ {event.time}</Text>
-            )}
-
-            {event.location && (
-              <Text style={styles.eventInfo}>📍 {event.location}</Text>
-            )}
-
-            <Text style={styles.eventInfo}>👥 {event.participants}</Text>
-
-            {/* STATUS + ACTION */}
-            {event.status === "ENDED" ? (
-              <>
-                <Text style={styles.statusEnded}>ENDED</Text>
-                <TouchableOpacity
-                  style={styles.secondaryButton}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/certificates",
-                      params: event,
-                    })
-                  }
-                >
-                  <Text style={styles.secondaryButtonText}>
-                    View Certificate
-                  </Text>
-                </TouchableOpacity>
-              </>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          {/* Upcoming Events */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Upcoming Events</Text>
+              <TouchableOpacity onPress={() => router.push("/events")}>
+                <Text style={styles.viewAll}>View All →</Text>
+              </TouchableOpacity>
+            </View>
+            {upcomingEvent.length === 0 ? (
+              <Text style={{ textAlign: "center", marginTop: 20 }}>
+                No upcoming events found.
+              </Text>
             ) : (
-              <>
-                <Text style={styles.statusOpen}>OPEN</Text>
-                <TouchableOpacity
-                  style={styles.primaryButton}
+              upcomingEvent.map((event) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
                   onPress={() =>
                     router.push({
-                      pathname: "/register",
+                      pathname: "/events/register",
                       params: event,
                     })
                   }
-                >
-                  <Text style={styles.primaryButtonText}>Register</Text>
-                </TouchableOpacity>{" "}
-              </>
+                />
+              ))
             )}
           </View>
-        ))}
+
+          {/* Join KUCC */}
+
+          {!profile.isMember ? (
+            <>
+              <TouchableOpacity
+                style={styles.joinCard}
+                onPress={() => router.push("/membership")}
+              >
+                <Text style={styles.joinText}>Join KUCC</Text>
+              </TouchableOpacity>
+            </>
+          ) : null}
+        </ScrollView>
       </View>
-
-      {/* Upcoming Events */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Upcoming Events</Text>
-          <TouchableOpacity onPress={() => router.push("/events")}>
-            <Text style={styles.viewAll}>View All →</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.smallCard}>
-          <View>
-            <Text style={styles.eventTitle}>{upcomingEvent.title}</Text>
-            <Text style={styles.eventInfo}>📅 {upcomingEvent.date}</Text>
-            <Text style={styles.eventInfo}>📍 {upcomingEvent.location}</Text>
-            <Text style={styles.eventInfo}>
-              👥 {upcomingEvent.participants}
-            </Text>
-          </View>
-
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() =>
-              router.push({
-                pathname: "/events/register",
-                params: upcomingEvent,
-              })
-            }
-          >
-            <Text style={styles.secondaryButtonText}>Register</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-      {/* Join KUCC */}
-      <TouchableOpacity
-        style={styles.joinCard}
-        onPress={() => router.push("/membership")}
-      >
-        <Text style={styles.joinText}>Want to see more? Join KUCC</Text>
-        <Text style={styles.joinSubText}> Click here to become a member! </Text>
-      </TouchableOpacity>
-    </ScrollView>
+    </ScreenWrapper>
   );
 }
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#E6E6E6" },
 
@@ -276,7 +240,9 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   secondaryButtonText: { color: "#FFF", fontSize: 12, fontWeight: "600" },
-  /* Join KUCC */ joinCard: {
+
+  /* Join KUCC */
+  joinCard: {
     backgroundColor: "#3C3F8F",
     marginHorizontal: 20,
     marginVertical: 30,
