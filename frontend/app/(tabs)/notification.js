@@ -1,18 +1,23 @@
 // app/(tabs)/notification.js
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
+
 import {
   ActivityIndicator,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
+import ScreenWrapper from "../../components/ScreenWrapper.js";
 import { getNotifications } from "../../services/notificationService.js";
 import { groupNotifications } from "../../utils/notificationUtils.js";
 
-
 export default function NotificationScreen() {
+  const { router } = useRouter();
   const [notifications, setNotifications] = useState({
     today: [],
     weekly: [],
@@ -124,38 +129,66 @@ export default function NotificationScreen() {
 
   return (
     // <SafeAreaView>
-    <ScrollView
-      style={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    >
-      {notifications.today.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Today</Text>
-          {notifications.today.map(renderNotification)}
+    <ScreenWrapper backgroundColor="#2F346E" statusBarStyle="light">
+      <View style={{ flex: 1, backgroundColor: "#F2F2F2" }}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Notifications</Text>
+          <View style={{ width: 24 }} />
         </View>
-      )}
 
-      {notifications.weekly.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>This Week</Text>
-          {notifications.weekly.map(renderNotification)}
-        </View>
-      )}
+        <ScrollView
+          style={styles.container}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          {notifications.today.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Today</Text>
+              {notifications.today.map(renderNotification)}
+            </View>
+          )}
 
-      {notifications.older.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Older</Text>
-          {notifications.older.map(renderNotification)}
-        </View>
-      )}
-    </ScrollView>
-    // </SafeAreaView>
+          {notifications.weekly.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>This Week</Text>
+              {notifications.weekly.map(renderNotification)}
+            </View>
+          )}
+
+          {notifications.older.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Older</Text>
+              {notifications.older.map(renderNotification)}
+            </View>
+          )}
+        </ScrollView>
+      </View>
+    </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
+  header: {
+    backgroundColor: "#2F346E",
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    paddingTop: 15, // small internal spacing only
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+  },
+
+  headerTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "700",
+  },
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
