@@ -1,111 +1,19 @@
 // frontend/app/events.js
 
-// import { Ionicons } from "@expo/vector-icons";
-// import { useRouter } from "expo-router";
-// import { useState } from "react";
-// import {
-//   ScrollView,
-//   StyleSheet,
-//   Text,
-//   TouchableOpacity,
-//   View,
-// } from "react-native";
-// import EventCard from "../components/EventCard";
-
-// export default function Events() {
-//   const router = useRouter();
-//   const [tab, setTab] = useState("Ongoing");
-
-//   const events = {
-//     Ongoing: [
-//       {
-//         id: "techfest-2025",
-//         title: "Annual Tech Fest 2025",
-//         date: "Dec 15–17, 2025",
-//         participants: "250+ participants",
-//         status: "OPEN",
-//       },
-//     ],
-//     Upcoming: [
-//       {
-//         id: "webdev-2025",
-//         title: "Web Development MasterClass",
-//         date: "Oct 5, 2025",
-//         participants: "200 participants",
-//         status: "OPEN",
-//       },
-//       {
-//         id: "opensource-2025",
-//         title: "Open Source Contribution",
-//         date: "Dec 5, 2025 · 2:00 PM",
-//         participants: "30 seats left",
-//         status: "OPEN",
-//       },
-//     ],
-//     Past: [
-//       {
-//         id: "hackathon-2024",
-//         title: "Hackathon 2024",
-//         date: "Dec 2024",
-//         participants: "100+ participants",
-//         status: "ENDED",
-//       },
-//     ],
-//   };
-
-//   return (
-//     <View style={styles.container}>
-//       {/* HEADER */}
-//       <View style={styles.header}>
-//         <TouchableOpacity onPress={() => router.back()}>
-//           <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-//         </TouchableOpacity>
-//         <Text style={styles.headerTitle}>Events</Text>
-//         <View style={{ width: 24 }} /> {/* spacer */}
-//       </View>
-
-//       {/* TABS */}
-//       <View style={styles.tabsWrapper}>
-//         {["Ongoing", "Upcoming", "Past"].map((t) => (
-//           <TouchableOpacity
-//             key={t}
-//             style={[styles.tab, tab === t && styles.activeTab]}
-//             onPress={() => setTab(t)}
-//           >
-//             <Text style={[styles.tabText, tab === t && styles.activeTabText]}>
-//               {t}
-//             </Text>
-//           </TouchableOpacity>
-//         ))}
-//       </View>
-
-//       {/* CONTENT */}
-//       <ScrollView
-//         contentContainerStyle={styles.content}
-//         showsVerticalScrollIndicator={false}
-//       >
-//         {events[tab].map((event) => (
-//           <EventCard key={event.id} event={event} />
-//         ))}
-//       </ScrollView>
-//     </View>
-//   );
-// }
-
-// frontend/app/events.js
-
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+
 import EventCard from "../../components/EventCard";
+import ScreenWrapper from "../../components/ScreenWrapper";
 import { fetchEvents } from "../../services/eventsApi";
 
 export default function Events() {
@@ -146,51 +54,57 @@ export default function Events() {
   const displayedEvents = tab === "Upcoming" ? upcomingEvents : pastEvents;
 
   return (
-    <View style={styles.container}>
-      {/* HEADER */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Events</Text>
-        <View style={{ width: 24 }} />
-      </View>
+    <>
+      <ScreenWrapper backgroundColor="#2F346E" statusBarStyle="light">
+        <View style={{ flex: 1, backgroundColor: "#F2F2F2" }}>
+          {/* HEADER */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Events</Text>
+            <View style={{ width: 24 }} />
+          </View>
 
-      {/* TABS */}
-      <View style={styles.tabsWrapper}>
-        {["Upcoming", "Past"].map((t) => (
-          <TouchableOpacity
-            key={t}
-            style={[styles.tab, tab === t && styles.activeTab]}
-            onPress={() => setTab(t)}
-          >
-            <Text style={[styles.tabText, tab === t && styles.activeTabText]}>
-              {t}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+          {/* TABS */}
+          <View style={styles.tabsWrapper}>
+            {["Upcoming", "Past"].map((t) => (
+              <TouchableOpacity
+                key={t}
+                style={[styles.tab, tab === t && styles.activeTab]}
+                onPress={() => setTab(t)}
+              >
+                <Text
+                  style={[styles.tabText, tab === t && styles.activeTabText]}
+                >
+                  {t}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
-      {/* CONTENT */}
-      {loading ? (
-        <ActivityIndicator size="large" style={{ marginTop: 40 }} />
-      ) : (
-        <ScrollView
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-        >
-          {displayedEvents.length === 0 ? (
-            <Text style={{ textAlign: "center", marginTop: 20 }}>
-              No events found.
-            </Text>
+          {/* CONTENT */}
+          {loading ? (
+            <ActivityIndicator size="large" style={{ marginTop: 40 }} />
           ) : (
-            displayedEvents.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))
+            <ScrollView
+              contentContainerStyle={styles.content}
+              showsVerticalScrollIndicator={false}
+            >
+              {displayedEvents.length === 0 ? (
+                <Text style={{ textAlign: "center", marginTop: 20 }}>
+                  No events found.
+                </Text>
+              ) : (
+                displayedEvents.map((event) => (
+                  <EventCard key={event.id} event={event} />
+                ))
+              )}
+            </ScrollView>
           )}
-        </ScrollView>
-      )}
-    </View>
+        </View>
+      </ScreenWrapper>
+    </>
   );
 }
 
@@ -203,9 +117,9 @@ const styles = StyleSheet.create({
   /* HEADER */
   header: {
     backgroundColor: "#2F346E",
-    paddingTop: 50,
     paddingBottom: 20,
     paddingHorizontal: 20,
+    paddingTop: 15, // small internal spacing only
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
