@@ -188,6 +188,27 @@ export default function About() {
               </Collapsible>
             </View>
           ))}
+
+          {/* Contact Section */}
+          <Text style={styles.subTitle}>Contact Us</Text>
+          <View style={styles.contactCard}>
+            <View style={styles.contactRow}>
+              <Ionicons name="mail-outline" size={20} color="#3C3F8F" />
+              <Text style={styles.contactLabel}> Email:</Text>
+              <Text style={styles.contactValue}>kucc@ku.edu.np</Text>
+            </View>
+
+            <View style={styles.contactRow}>
+              <Ionicons name="call-outline" size={20} color="#3C3F8F" />
+              <Text style={styles.contactLabel}>President Phone:</Text>
+              <Text style={styles.contactValue}>+977-9812345678</Text>
+            </View>
+            <View style={styles.contactRow}>
+              <Ionicons name="call-outline" size={20} color="#3C3F8F" />
+              <Text style={styles.contactLabel}>Secretary Phone:</Text>
+              <Text style={styles.contactValue}>+977-9812345678</Text>
+            </View>
+          </View>
         </ScrollView>
       </ScreenWrapper>
     </>
@@ -280,5 +301,32 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     fontSize: 14,
     color: "#555",
+  },
+  contactCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 30,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  contactRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  contactLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#3C3F8F",
+    marginLeft: 10,
+    width: 130,
+  },
+  contactValue: {
+    fontSize: 14,
+    color: "#555",
+    flexShrink: 1,
   },
 });
