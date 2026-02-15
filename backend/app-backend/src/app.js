@@ -4,11 +4,11 @@ import cors from "cors";
 import express from "express";
 
 import logger from "./middleware/logger.js";
+import esewaRoutes from "./routes/esewaRoutes.js";
 import eventRoutes from "./routes/eventRoutes.js";
-import itemRoutes from "./routes/itemRoutes.js";
+import membershipRoutes from "./routes/membershipRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
-
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -18,10 +18,13 @@ app.use(clerkMiddleware());
 app.use(logger);
 
 app.use("/api/user", userRoutes);
-app.use("/api/data", itemRoutes);
 
 app.use("/api/profile", profileRoutes);
 app.use("/api/events", eventRoutes);
+
+app.use("/api/esewa", esewaRoutes);
+
+app.use("/api/membership", membershipRoutes);
 
 app.use((req, res) => res.status(404).json({ error: "Route not found" }));
 
