@@ -1,3 +1,4 @@
+//frontend/app/(tabs)/_layout.js
 import { Tabs } from "expo-router";
 import CustomTabBar from "../../components/navbar";
 
