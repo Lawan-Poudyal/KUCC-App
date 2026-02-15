@@ -1,3 +1,5 @@
+// frontend/components/UserSync.jsx
+
 import { useAuth } from "@clerk/clerk-expo";
 import { useEffect, useRef } from "react";
 
@@ -6,8 +8,16 @@ export default function UserSync() {
   const hasSynced = useRef(false);
 
   useEffect(() => {
+    // console.log("UserSync effect triggered");
+    // console.log("isLoaded:", isLoaded);
+    // console.log("isSignedIn:", isSignedIn);
+    // console.log("hasSynced:", hasSynced.current);
+
     const syncUser = async () => {
-      if (!isLoaded || !isSignedIn || hasSynced.current) return;
+      if (!isLoaded || !isSignedIn || hasSynced.current) {
+        console.log("Sync skipped");
+        return;
+      }
 
       try {
         // const token = await getToken({ template: "default" });
@@ -16,7 +26,7 @@ export default function UserSync() {
 
         // Test API
         // console.log("CLERK JWT:", token);
-        // console.log("HIIIIII:    ", process.env.EXPO_PUBLIC_API_URL);
+        console.log("HIIIIII:    ", process.env.EXPO_PUBLIC_API_URL);
         const res = await fetch(
           `${process.env.EXPO_PUBLIC_API_URL}/api/user/sync`,
           {
